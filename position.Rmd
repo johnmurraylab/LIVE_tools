@@ -1,0 +1,29 @@
+```{r}
+source("CD_Processing.R")
+source("drawEmb.R")
+```
+```{r}
+dat <- CD_In(directory = "JIM767_25Corrected/", prefix = "", TIME = "Corrected")
+```
+```{r}
+rotated <- RePosition(dat[["CD"]][[5]], time = 210, indicatorD = NULL, indicatorV = NULL, indicatorL = "MSa", indicatorR = "MSp")
+```
+```{r}
+figO <- drawEmbLine(
+  dat[["CD"]][[5]], 210,
+  lineages = list("MSaa", "MSap","MSpa", "MSpp", "Cxa", "E"),
+  colors = list(rgb(1,1,0), rgb(0,1,0), rgb(1,0,1), rgb(0,0,1), rgb(0.5,0,1), rgb(1,0,0)),
+  opacitys = list(1,1,1,1,0.4,0.6),otherOpacity = 0.2,
+  showAxis = T)
+figO[[1]]
+```
+```{r}
+figRotated <- drawEmbLine(
+  rotated, 210, 
+  lineages = list("MSaxa", "MSaxp","MSpxa", "MSpxp", "Cxa", "E"),
+  colors = list(rgb(1,1,0), rgb(0,1,0), rgb(1,0,1), rgb(0,0,1), rgb(0.5,0,1), rgb(1,0,0)),
+  opacitys = list(1,1,1,1,0.4,0.6),otherOpacity = 0.2,
+  xSize = 1,ySize = 1,zSize = 1,
+  showAxis = T)
+figRotated[[1]]
+```
