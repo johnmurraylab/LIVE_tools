@@ -15,3 +15,5 @@
 *.dll
 *.log
 *.txt
+*.zip
+README.Rmd
