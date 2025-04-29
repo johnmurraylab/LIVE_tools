@@ -17,28 +17,32 @@ if (!requireNamespace("animation", quietly = TRUE)) {
 }
 
 drawEmbExp<-function(embryoCD, time, lineages=NULL, symbols = NULL, 
-                       ReporterForAll=F, colorScheme = "blackBlueOrange", 
-                       maxBlot = NULL, minBlot = NULL, 
-                       xSize=0.08651, ySize=0.08651, zSize=0.5){
+                     ReporterForAll=F, colorScheme = "blackBlueOrange", 
+                     maxBlot = NULL, minBlot = NULL, 
+                     xSize=0.08651, ySize=0.08651, zSize=0.5, 
+                     center = list(x=0,y=0,z=0), viewPoint = list(x=0,y=0,z=2.5)
+                     ){
   embDat <- embryoCD|>grepCells(lineages = "ALL", times = time)
   embDat$x <- embDat$x*xSize
   embDat$y <- embDat$y*ySize
   embDat$z <- embDat$z*zSize
-  if(is.na(maxBlot)){maxBlot <- max(embDat$blot)}
-  if(is.na(minBlot)){minBlot <- min(embDat$blot)}
+  if(is.null(maxBlot)){maxBlot <- max(embDat$blot)}
+  if(is.null(minBlot)){minBlot <- min(embDat$blot)}
   if(length(symbols) != length(lineages)){stop("symbols argument not properly specified")}
   if(colorScheme=="blackBlueOrange"){#default color scheme for reporter intensity (blue red white)
     colorScheme<-list(c(0,rgb(0,0,0)), c(0.3,rgb(0,0.2,1)), c(0.7,rgb(1,0,0.2)), c(1,rgb(1,0.7,0.3)))}
   else if(colorScheme=="blackOrange"){colorScheme<-list(c(0,rgb(0,0,0)), c(0.6,rgb(1,0.1,0.1)), c(1,rgb(1,0.7,0.3)))}
   
-  selectCells <- NULL
   fig<-plot_ly() |> #initiate a plotly figure object
-    layout(scene = list(aspectmode = "data", 
-                        xaxis = list(title = '', showgrid = FALSE, showticklabels=F),
-                        yaxis = list(title = '', showgrid = FALSE, showticklabels=F),
-                        zaxis = list(title = '', showgrid = FALSE, showticklabels=F)
-                        ), paper_bgcolor=rgb(1,1,1))
-
+    layout(
+      scene = list(aspectmode = "data", 
+        xaxis = list(title = '', showgrid = FALSE, showticklabels=F),
+        yaxis = list(title = '', showgrid = FALSE, showticklabels=F),
+        zaxis = list(title = '', showgrid = FALSE, showticklabels=F),
+        camera = list(eye = viewPoint, center=center, projection=list(type="orthographic"))), 
+      paper_bgcolor=rgb(1,1,1))
+  
+  selectCells <- NULL
   for (i in seq_along(lineages)) { #plot highlighted cells
     lineage <- lineages[[i]]
     thisSymbol <- symbols[[i]]
@@ -49,18 +53,20 @@ drawEmbExp<-function(embryoCD, time, lineages=NULL, symbols = NULL,
     selectCells <- union(selectCells, thisCells)
   }
   
+  if(is.null(lineages)){remainCells<-embDat}
+  else{remainCells <- embDat[-selectCells,]}
   fig<-fig%>%add_trace(name="other cells",
-                       x=embDat[-selectCells,"x"], 
-                       y=embDat[-selectCells,"y"], 
-                       z=embDat[-selectCells,"z"], #cells that are not selected will be plotted transparent
+                       x=remainCells[,"x"], 
+                       y=remainCells[,"y"], 
+                       z=remainCells[,"z"], #cells that are not selected will be plotted transparent
                        type = "scatter3d", mode="markers",
-                       marker = list(color=embDat[-selectCells,"blot"], size = 10, opacity = 1, 
+                       marker = list(color=remainCells[,"blot"], size = 10, opacity = 1, 
                                      symbol = "circle-open",
                                      #line=list(color = "grey", width=3), 
                                      colorscale=colorScheme, cmin=minBlot, cmax=maxBlot)
   )
   
-  return(list(fig, embDat[selectCells,], embDat[-selectCells,]))
+  return(list(fig, embDat[selectCells,], remainCells[,]))
 }
 
 AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol, 
@@ -82,6 +88,7 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
 drawEmbLine <- function(embryoCD, time, lineages, colors, opacitys,
                         xSize=0.08651, ySize=0.08651, zSize=0.5, 
                         otherOpacity = 0.2, cellSize = 10,
+                        center = list(x=0,y=0,z=0), viewPoint = list(x=0,y=0,z=2.5), 
                         showAxis = F){
   embDat <- embryoCD|>grepCells(lineages = "ALL", times = time)
   embDat$x <- embDat$x*xSize
@@ -100,11 +107,15 @@ drawEmbLine <- function(embryoCD, time, lineages, colors, opacitys,
     ztitle <- ""
   }
   fig<-plot_ly() |> #initiate a plotly figure object
-    layout(scene = list(aspectmode = "data", 
-                        xaxis = list(title = xtitle, showgrid = showAxis, showticklabels=showAxis),
-                        yaxis = list(title = ytitle, showgrid = showAxis, showticklabels=showAxis),
-                        zaxis = list(title = ztitle, showgrid = showAxis, showticklabels=showAxis)
-    ), paper_bgcolor=rgb(1,1,1))
+    layout(
+      scene = list(
+        aspectmode = "data", 
+        xaxis = list(title = xtitle, showgrid = showAxis, showticklabels=showAxis),
+        yaxis = list(title = ytitle, showgrid = showAxis, showticklabels=showAxis),
+        zaxis = list(title = ztitle, showgrid = showAxis, showticklabels=showAxis), 
+        camera = list(eye = viewPoint, center=center, projection=list(type="orthographic"))), 
+      paper_bgcolor = rgb(1,1,1)
+    )
   selectCells <- NULL
   for (i in seq_along(lineages)) { #add each lineage as a trace
     lineage <- lineages[[i]]
