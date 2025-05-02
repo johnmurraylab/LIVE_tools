@@ -65,7 +65,7 @@ grepCells <- function(CDData, cells=NULL, lineages=NULL,
   else if("ALL"%in%cells || "ALL"%in%lineages){
     selectCells<-CDData|>rownames()|>as.integer()}
   else{
-    CellREs <- lapply(cells, function(cell){paste0("^", cell, "$")})
+    CellREs <- cells|> lapply(function(line){paste0("^", gsub("x", "[a-z]", line),"$")})
     CellREs <- c(CellREs, lineageRE(lineages))
   }
   for (RE in CellREs){selectCells <- union(selectCells, grep(RE, CDData$cell))}
@@ -144,14 +144,14 @@ RePosition <- function(CDFrame, time, indicatorP = "C", indicatorD = "Cxa",
   if(!is.null(indicatorV)){
     VCells <- grepCells(CDFrame, lineages = indicatorV) 
     VDVect_V <- c(mean(VCells$x), mean(VCells$y), mean(VCells$z)) |> OrthgonalProj(APVect)
-    DVVect <- DVVect - DVVect_V
+    DVVect <- DVVect - VDVect_V
   }
   if(!is.null(indicatorR)){
     RCells <- grepCells(CDFrame, lineages = indicatorR)
     DVVect_R <- c(mean(RCells$x), mean(RCells$y), mean(RCells$z)) |> cross_product(APVect)
     DVVect <- DVVect + DVVect_R
   }
-  if(!is.null(indicatorR)){
+  if(!is.null(indicatorL)){
     LCells <- grepCells(CDFrame, lineages = indicatorL)
     VDVect_L <- c(mean(LCells$x), mean(LCells$y), mean(LCells$z)) |> cross_product(APVect)
     DVVect <- DVVect - VDVect_L
@@ -243,8 +243,8 @@ lineageNames <- function(lineage){
 #' @export
 #' @examples lineageRE(c("EMS", "C"))
 lineageRE <- function(lineage){
-  sublineage<- lineage%>%lapply(lineageNames)
+  sublineage<- lineage |> lapply(lineageNames)
   lineage <- union(lineage, sublineage|>unlist())
-  REs <- lineage%>%lapply(function(line){paste0("^", gsub("x", "[a-z]", line))})
+  REs <- lineage |> lapply(function(line){paste0("^", gsub("x", "[a-z]", line))})
   return(REs)
 }
