@@ -39,7 +39,8 @@ drawEmbExp<-function(embryoCD, time, lineages=NULL, symbols = NULL,
         xaxis = list(title = '', showgrid = FALSE, showticklabels=F),
         yaxis = list(title = '', showgrid = FALSE, showticklabels=F),
         zaxis = list(title = '', showgrid = FALSE, showticklabels=F),
-        camera = list(eye = viewPoint, center=center, projection=list(type="orthographic"))), 
+        camera = list(eye = viewPoint, center=center, up = list(x = 0, y = 1, z = 0),
+                      projection=list(type="orthographic"))), 
       paper_bgcolor=rgb(1,1,1))
   
   selectCells <- NULL
@@ -113,7 +114,8 @@ drawEmbLine <- function(embryoCD, time, lineages, colors, opacitys,
         xaxis = list(title = xtitle, showgrid = showAxis, showticklabels=showAxis),
         yaxis = list(title = ytitle, showgrid = showAxis, showticklabels=showAxis),
         zaxis = list(title = ztitle, showgrid = showAxis, showticklabels=showAxis), 
-        camera = list(eye = viewPoint, center=center, projection=list(type="orthographic"))), 
+        camera = list(eye = viewPoint, center=center, up = list(x = 0, y = 1, z = 0),
+                      projection=list(type="orthographic"))), 
       paper_bgcolor = rgb(1,1,1)
     )
   selectCells <- NULL
