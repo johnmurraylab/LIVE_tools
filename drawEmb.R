@@ -16,10 +16,10 @@ if (!requireNamespace("animation", quietly = TRUE)) {
   stop("Package 'animation' is required. Install with install.packages('animation')")
 }
 
-#' drawEmbExp 
+#' drawEmbExp draw the nucleus positions of the embryo in 3D scatter plots, colored by expression
 #'
-#' @param embryoCD the embryo dataframe with cell, time, and blot(expression) column
-#' @param time which time to plot the embryo
+#' @param embryoCD the embryo dataframe with cell, time, and blot(expression) column, mandatory
+#' @param time which time to plot the embryo, mandatory
 #' @param lineages a list of lineages to highlight (plot with the given symbol in "shapes" parameter)
 #' @param shapes a list of shapes to plot each lineage given in "lineages"
 #' @param ReporterForAll color the nucleus points by expression or not (default TRUE)
@@ -29,9 +29,9 @@ if (!requireNamespace("animation", quietly = TRUE)) {
 #' @param xSize size of each x unit in embryoCD dataframe
 #' @param ySize size of each y unit in embryoCD dataframe
 #' @param zSize size of each z unit in embryoCD dataframe
-#' @param whiteSpace relative extra space on the 3 dimensions to leave beyond the actual range of cell loactions
 #' @param center which point in the 3d space does the camera aim at
 #' @param viewPoint where to put the imaginative camera initially
+#' @param showAxis whether to display the x,y,z axis or not
 #'
 #' @return a list made of: the plotly figure, a dataframe of the highlighted cells, and a dataframe of cells not highlighted
 #' @export
@@ -41,7 +41,7 @@ drawEmbExp<-function(embryoCD, time, lineages=c("ABa", "ABp","MS", "E", "C", "D"
                      shapes = NULL, 
                      ReporterForAll=F, colorScheme = NULL, 
                      maxBlot = NULL, minBlot = NULL, 
-                     xSize=0.08651, ySize=0.08651, zSize=0.5, whiteSpace = c(0.05,2), 
+                     xSize=1, ySize=1, zSize=1, #whiteSpace = c(0.05,2), 
                      center = list(x=0,y=0,z=0), viewPoint = list(x=0,y=0,z=1.8),
                      showAxis = F){
   embDat <- embryoCD|>grepCells(lineages = "ALL", times = time)
@@ -136,7 +136,7 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
              y=data[selectedCells,"y"], 
              z=data[selectedCells,"z"], #cells that are not selected will be plotted transparent
              type = "scatter3d", mode="markers",
-             marker = list(color=data[selectedCells,"blot"], size = 6, opacity = 1, 
+             marker = list(color=data[selectedCells,"blot"], size = 7.5, opacity = 1, 
                            symbol = symbol, 
                            colorscale=colorScheme, cmin=colorMin, cmax=colorMax, 
                            colorbar = list(title="expression", x = 0)
@@ -145,9 +145,25 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
   return(plotlyFig)
 }
 
-drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, opacitys = NULL,
-                        xSize=0.08651, ySize=0.08651, zSize=0.5, 
-                        otherOpacity = 0.2, cellSize = 10,
+#' drawEmbLine draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage
+#' 
+#' @param embryoCD the embryo dataframe with cell, time, and blot(expression) column, mandatory
+#' @param time which time to plot the embryo, mandatory
+#' @param lineages a list of lineages to highlight (plot with the given color and opacity in "colors" and "opacity_s" parameter)
+#' @param colors a list of colors to plot each lineage given in "lineages" 
+#' @param opacity_s a list of opacity for each lineage given in "lineages" 
+#' @param xSize size of each x unit in embryoCD dataframe
+#' @param ySize size of each y unit in embryoCD dataframe
+#' @param zSize size of each z unit in embryoCD dataframe
+#' @param otherOpacity opacity for cells not specified
+#' @param cellSize 
+#' @param center which point in the 3d space does the camera aim at
+#' @param viewPoint where to put the imaginative camera initially
+#' @param showAxis 
+#' @param time which time to plot the embryo, mandatory
+drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, opacity_s = NULL,
+                        xSize=1, ySize=1, zSize=1,
+                        otherOpacity = 0.2, cellSize = 7.5,
                         center = list(x=0,y=0,z=0), viewPoint = list(x=0,y=0,z=1.8), 
                         showAxis = F){
   embDat <- embryoCD|>grepCells(lineages = "ALL", times = time)
@@ -162,9 +178,9 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, opacitys =
     library("viridis")
     colors <- viridis_pal(option = "H")(traceCount)
   }
-  if(length(opacitys) != traceCount){
-    print("\'opacitys\' argument not properly specified")
-    opacitys <- rep(1, traceCount)
+  if(length(opacity_s) != traceCount){
+    print("\'opacity_s\' argument not properly specified")
+    opacity_s <- rep(1, traceCount)
   }
   if(showAxis){
     xtitle <- "x"
@@ -192,7 +208,7 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, opacitys =
   for (i in seq_along(lineages)) { #add each lineage as a trace
     lineage <- lineages[[i]]
     color <- colors[[i]]
-    opacity <- opacitys[[i]]
+    opacity <- opacity_s[[i]]
     thisCells <- grepCells(CDData = embDat, lineages = lineage, dataReturn = F)
     fig <- fig|>AddGroupLine(groupName = lineage, 
                              data = embDat, selectedCells = thisCells,
@@ -242,9 +258,9 @@ saveEmbImg <- function(
   plotly::save_image(fig, file = output_file, width = width, height = height, scale = 2)
 }
 
-#' createRotationGIF
+#' rotatingImgSet
 #' NOT IMPLEMENTED!!
-#' Generates a GIF showing rotation around the x-axis.
+#' Generates set of images showing the embryo rotation around the x-axis.
 #' need Reticulate that connects to a python distribution with "kaleido" and "plotly" installed
 #' @param fig The plotly figure object generated by drawEmbExp or drawEmbLine.
 #' @param output_file Path to save the output GIF. Default: "animation.gif".

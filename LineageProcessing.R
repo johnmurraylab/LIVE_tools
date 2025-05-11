@@ -131,6 +131,23 @@ RePosition <- function(CDFrame, time, indicatorP = "C", indicatorD = "Cxa",
   return(CDFrame)
 }
 
+#' totalRePosition center the embryo at 0,0,0 coordinate and rotate the embryo across all time points
+#'
+#' @param CDFrame a CD-like dataFrame
+#' @param time the time to generate rotation parameters, nucleus across all time points will be rotated with the same parameter
+#' @param indicatorP lineage on the relative posterior of embryo center 
+#' @param indicatorD lineage on the relative dorsal of embryo center, use NULL not NaN if not considering
+#' @param indicatorV lineage on the relative ventral of embryo center, use NULL not NaN if not considering
+#' @param indicatorL lineage on the relative left of embryo center, use NULL not NaN if not considering
+#' @param indicatorR lineage on the relative right of embryo center, use NULL not NaN if not considering
+#' @param xSize 
+#' @param ySize 
+#' @param zSize 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 totalRePosition <- function(CDFrame, time, indicatorP = "C", indicatorD = "Cxa",
                             indicatorV = "MSxxp", indicatorL = NULL, indicatorR = NULL,
                             xSize=0.08651, ySize=0.08651, zSize=0.5){
