@@ -6,7 +6,6 @@
 .DS_Store
 *.pdf
 *.png
-*.csv
 *.xlsx
 *.rda
 *.rds
@@ -19,3 +18,5 @@
 .Rprofile
 README.Rmd
 drawEmb.Rmd
+JIM767_25Corrected/
+JIM767_15Corrected/
