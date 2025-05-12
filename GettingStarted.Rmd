@@ -81,8 +81,9 @@ figO[[1]]
 ```
 Optional: Align embryo position/rotation and then plot
 ```{r}
-rotatedEmbryo <- totalRePosition(embryo, time = 139, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
-                             xSize=0.08651, ySize=0.08651, zSize=0.5) #the xyz dimension is corrected during rotation
+rotatedEmbryo <- totalRePosition(
+  embryo, time = 139, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
+  xSize=0.08651, ySize=0.08651, zSize=0.5) #the xyz dimension is corrected during rotation
 figRotated <- drawEmbLine(
   rotatedEmbryo, 139, xSize = 1, ySize = 1, zSize = 1,
   showAxis = T)
@@ -90,6 +91,6 @@ figRotated[[1]]
 ```
 Plot with marker gene expression
 ```{r}
-figExp <- drawEmbExp(rotatedEmbryo, time = 139)
+figExp <- drawEmbVal(rotatedEmbryo, time = 139)
 figExp[[1]]
 ```

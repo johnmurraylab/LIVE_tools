@@ -12,14 +12,12 @@ if (!requireNamespace("webshot", quietly = TRUE)) {
 if (!requireNamespace("magick", quietly = TRUE)) {
   stop("Package 'magick' is required. Install with install.packages('magick')")
 }
-if (!requireNamespace("animation", quietly = TRUE)) {
-  stop("Package 'animation' is required. Install with install.packages('animation')")
-}
 
-#' drawEmbExp draw the nucleus positions of the embryo in 3D scatter plots, colored by expression
+#' drawEmbVal draw the nucleus positions of the embryo in 3D scatter plots, colored by expression
 #'
 #' @param embryoCD the embryo dataframe with cell, time, and blot(expression) column, mandatory
 #' @param time which time to plot the embryo, mandatory
+#' @param valCol column that will color the nucleus by
 #' @param lineages a list of lineages to highlight (plot with the given symbol in "shapes" parameter)
 #' @param shapes a list of shapes to plot each lineage given in "lineages"
 #' @param ReporterForAll color the nucleus points by expression or not (default TRUE)
@@ -37,7 +35,8 @@ if (!requireNamespace("animation", quietly = TRUE)) {
 #' @export
 #'
 #' @examples
-drawEmbExp<-function(embryoCD, time, lineages=c("ABa", "ABp","MS", "E", "C", "D", "P4"), 
+drawEmbVal<-function(embryoCD, time, valCol = "blot",
+                     lineages=c("P0"), 
                      shapes = NULL, 
                      ReporterForAll=F, colorScheme = NULL, 
                      maxBlot = NULL, minBlot = NULL, 
@@ -49,12 +48,12 @@ drawEmbExp<-function(embryoCD, time, lineages=c("ABa", "ABp","MS", "E", "C", "D"
   embDat$x <- embDat$x*xSize
   embDat$y <- embDat$y*ySize
   embDat$z <- embDat$z*zSize
-  expressions <- aggregate(embryoCD[,"blot"], by = list(embryoCD[,"cell"]), FUN = "mean")
-  names(expressions)<-c("cell", "blot")
-  embDat[,"blot"]<-NULL
-  embDat<- left_join(embDat, expressions, by = join_by(cell))
-  if(is.null(maxBlot)){maxBlot <- max(embDat$blot)}
-  if(is.null(minBlot)){minBlot <- min(embDat$blot)}
+  cell_value <- aggregate(embryoCD[,valCol], by = list(embryoCD[,"cell"]), FUN = "mean")
+  names(cell_value)<-c("cell", "value")
+  embDat[,valCol]<-NULL
+  embDat<- left_join(embDat, cell_value, by = "cell")
+  if(is.null(maxBlot)){maxBlot <- max(embDat$value)}
+  if(is.null(minBlot)){minBlot <- min(embDat$value)}
   if(identical(lineages, NULL)){lineages <- list("ABa", "ABp","MS", "E", "C", "D", "P4")} #default lineages
   if(length(shapes) != length(lineages)){
     print("\'shapes\' parameters not properly specified, using circles for all")
@@ -120,7 +119,7 @@ drawEmbExp<-function(embryoCD, time, lineages=c("ABa", "ABp","MS", "E", "C", "D"
                        y=embDat[otherCells,"y"], 
                        z=embDat[otherCells,"z"], #cells that are not selected will be plotted transparent
                        type = "scatter3d", mode="markers",
-                       marker = list(color=embDat[otherCells,"blot"], size = 6, opacity = alpha, 
+                       marker = list(color=embDat[otherCells,"value"], size = 6, opacity = alpha, 
                                      symbol = "circle-open",
                                      #line=list(color = "grey", width=3), 
                                      colorscale=colorScheme, cmin=minBlot, cmax=maxBlot)
@@ -136,7 +135,7 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
              y=data[selectedCells,"y"], 
              z=data[selectedCells,"z"], #cells that are not selected will be plotted transparent
              type = "scatter3d", mode="markers",
-             marker = list(color=data[selectedCells,"blot"], size = 7.5, opacity = 1, 
+             marker = list(color=data[selectedCells,"value"], size = 7.5, opacity = 1, 
                            symbol = symbol, 
                            colorscale=colorScheme, cmin=colorMin, cmax=colorMax, 
                            colorbar = list(title="expression", x = 0)
@@ -147,7 +146,7 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
 
 #' drawEmbLine draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage
 #' 
-#' @param embryoCD the embryo dataframe with cell, time, and blot(expression) column, mandatory
+#' @param embryoCD the embryo dataframe with cell, time column, mandatory
 #' @param time which time to plot the embryo, mandatory
 #' @param lineages a list of lineages to highlight (plot with the given color and opacity in "colors" and "opacity_s" parameter)
 #' @param colors a list of colors to plot each lineage given in "lineages" 
