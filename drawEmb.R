@@ -201,6 +201,7 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, opacity_s 
         camera = list(eye = viewPoint, center=center, up = list(x = 0, y = 1, z = 0)
                       #,projection=list(type="orthographic")
                       )), 
+
       paper_bgcolor = rgb(1,1,1)
     )
   selectCells <- NULL
