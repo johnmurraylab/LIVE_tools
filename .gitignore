@@ -6,7 +6,6 @@
 .DS_Store
 *.pdf
 *.png
-*.csv
 *.xlsx
 *.rda
 *.rds
@@ -16,4 +15,7 @@
 *.log
 *.txt
 *.zip
+.Rprofile
 README.Rmd
+drawEmb.Rmd
+readStarryNiteZip.Rmd
