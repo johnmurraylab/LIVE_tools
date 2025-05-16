@@ -23,7 +23,7 @@ readEmbryoTable <- function(file, time.file = NULL){
       file_content <- data.table::fread(paste0(temp_dir,"/",file_path), header = F, sep = ",")
       file_content[, time := timepoint]
       timepoint <- file_content[
-        !V10%in%c("polar1","polar2",""),
+        !V10%in%c("polar1","polar2","") & !grepl("^Nuc",V10),
         .(
           x = V6,y = V7,z = V8, size = V9,
           cell = V10, time = time,
@@ -258,12 +258,12 @@ rotationVec <- function(CDFrame, indicatorP, indicatorD, indicatorV, indicatorL,
   if(!is.null(indicatorR)){
     RCells <- grepCells(CDFrame, lineages = indicatorR)
     DVVect_R <- c(mean(RCells$x), mean(RCells$y), mean(RCells$z)) |> cross_product(APVect)
-    DVVect <- DVVect + DVVect_R
+    DVVect <- DVVect - DVVect_R
   }
   if(!is.null(indicatorL)){
     LCells <- grepCells(CDFrame, lineages = indicatorL)
     VDVect_L <- c(mean(LCells$x), mean(LCells$y), mean(LCells$z)) |> cross_product(APVect)
-    DVVect <- DVVect - VDVect_L
+    DVVect <- DVVect + VDVect_L
   }
   #do not scale before adding together so that lineages further from AP make more contributions
   DVVect <- DVVect/sqrt(sum(DVVect^2))#scale into a unit vector
@@ -272,10 +272,16 @@ rotationVec <- function(CDFrame, indicatorP, indicatorD, indicatorV, indicatorL,
   transformMatrix <- cbind(APVect,RLVect,DVVect)
   return(transformMatrix)
 }
+
+#'OrthgonalProj
+#'@description
 #'Gram-Schmidt Process gives the orthogonal component to AP axis
 OrthgonalProj <- function(v,u){
   vOrth <- v - (sum(v*u)*u)
 }
+
+#' cross_product
+#' @description
 #' vector cross-product for orthogonal vector
 cross_product <- function(v, u) {
   c(v[2] * u[3] - v[3] * u[2],

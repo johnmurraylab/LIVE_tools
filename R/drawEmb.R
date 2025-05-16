@@ -29,13 +29,11 @@
 #'
 #' @examples drawEmbVal(Embryo, lineages = c("MS", "E", "C"), shapes = c("circle","x","square"), time = 139)
 drawEmbVal<-function(embryoCD, time, valCol = "blot",
-                     lineages=c("P0"),
-                     shapes = NULL,
+                     lineages=c("P0"), shapes = NULL,
                      ReporterForAll=F, colorScheme = NULL,
                      maxBlot = NULL, minBlot = NULL,
-                     xSize=1, ySize=1, zSize=1, #whiteSpace = c(0.05,2),
-                     center = list(x=0,y=0,z=0), viewPoint = list(x=0,y=0,z=1.8),
-                     showAxis = F){
+                     xSize=1, ySize=1, zSize=1, aligned = F,#whiteSpace = c(0.05,2),
+                     center = list(x=0,y=0,z=0), viewPoint = list(x=0,y=0,z=1.8)){
   embDat <- embryoCD|>grepCells(lineages = "ALL", times = time)
   row.names(embDat)<- NULL
   embDat$x <- embDat$x*xSize
@@ -70,23 +68,23 @@ drawEmbVal<-function(embryoCD, time, valCol = "blot",
   # xrange <- rangeDim(embryoCD[,"x"])
   # yrange <- rangeDim(embryoCD[,"y"])
   # zrange <- rangeDim(embryoCD[,"z"])
-  if(showAxis){
+  if(aligned){
+    xtitle <- "AB(\U00B5m)"
+    ytitle <- "LR(\U00B5m)"
+    ztitle <- "DV(\U00B5m)"
+  }
+  else{
     xtitle <- "x"
     ytitle <- "y"
     ztitle <- "z"
-  }
-  else{
-    xtitle <- ""
-    ytitle <- ""
-    ztitle <- ""
   }
   fig<- plotly::plot_ly() |> #initiate a plotly figure object
     plotly::layout(
       scene = list(
         aspectmode = "data",
-        xaxis = list(title = xtitle, showgrid = showAxis, showticklabels=showAxis),
-        yaxis = list(title = ytitle, showgrid = showAxis, showticklabels=showAxis),
-        zaxis = list(title = ztitle, showgrid = showAxis, showticklabels=showAxis),
+        xaxis = list(title = xtitle, showgrid = T, showticklabels=aligned),
+        yaxis = list(title = ytitle, showgrid = T, showticklabels=aligned),
+        zaxis = list(title = ztitle, showgrid = T, showticklabels=aligned),
         camera = list(eye = viewPoint, center=center, up = list(x = 0, y = 1, z = 0)
                       #,projection=list(type="orthographic")
         )),
@@ -167,16 +165,18 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
 #'
 #' @examples drawEmbVal(Embryo, lineages = c("MS", "E", "C"), colors = c(rgb(1,0,0), rgb(1,0,1), rgb(0,0,1)), time = 139)
 drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, opacity_s = NULL,
-                        xSize=1, ySize=1, zSize=1,
+                        xSize=1, ySize=1, zSize=1, aligned = F,
                         otherOpacity = 0.2, cellSize = 7.5,
-                        center = list(x=0,y=0,z=0), viewPoint = list(x=0,y=0,z=1.8),
-                        showAxis = F){
+                        center = list(x=0,y=0,z=0), viewPoint = list(x=0,y=0,z=1.8)){
   embDat <- embryoCD|>grepCells(lineages = "ALL", times = time)
   row.names(embDat)<- NULL
   embDat$x <- embDat$x*xSize
   embDat$y <- embDat$y*ySize
   embDat$z <- embDat$z*zSize
-  if(identical(lineages, NULL)){lineages <- list("ABa", "ABp","MS", "E", "C", "D", "P4")} #default lineages
+  if(identical(lineages, NULL)){
+    lineages <- list("ABa", "ABp","MS", "E", "C", "D", "P4") #default lineages
+    opacity_s <- rep(0.75, 7)
+  }
   traceCount <- length(lineages)
   if(length(colors) != traceCount){
     print("\'colors\' argument not properly specified")
@@ -186,26 +186,27 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, opacity_s 
     print("\'opacity_s\' argument not properly specified")
     opacity_s <- rep(1, traceCount)
   }
-  if(showAxis){
+  if(aligned){
+    xtitle <- "AB(\U00B5m)"
+    ytitle <- "LR(\U00B5m)"
+    ztitle <- "DV(\U00B5m)"
+  }
+  else{
     xtitle <- "x"
     ytitle <- "y"
     ztitle <- "z"
-  }
-  else{
-    xtitle <- ""
-    ytitle <- ""
-    ztitle <- ""
   }
   fig<-plotly::plot_ly() |> #initiate a plotly figure object
     plotly::layout(
       scene = list(
         aspectmode = "data",
-        xaxis = list(title = xtitle, showgrid = showAxis, showticklabels=showAxis),
-        yaxis = list(title = ytitle, showgrid = showAxis, showticklabels=showAxis),
-        zaxis = list(title = ztitle, showgrid = showAxis, showticklabels=showAxis),
+        xaxis = list(title = xtitle, showgrid = T, showticklabels=aligned),
+        yaxis = list(title = ytitle, showgrid = T, showticklabels=aligned),
+        zaxis = list(title = ztitle, showgrid = T, showticklabels=aligned),
         camera = list(eye = viewPoint, center=center, up = list(x = 0, y = 1, z = 0)
                       #,projection=list(type="orthographic")
                       )),
+      legend = list(itemsizing = "constant") ,
       paper_bgcolor = rgb(1,1,1)
     )
   selectCells <- NULL
