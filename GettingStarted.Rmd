@@ -16,30 +16,57 @@ Intended to process data tables where:
 `LineageProcessing.R` contains functions to process one single embryo entity, and slices from embryo entities, which are the dependencies of other codes. INcluding functions 
 `CD_Processing.R` are functions to work with a directory of several embryo data tables. Including functions to load data tables, retrieve specific cells and lineages data from multiple embryos, and operations that are only possible with multiple embryos (e.g. depth correction)
 `drawEmb.R` contains functions that plot all nucleus in an embryo in 3D
-
-## Example Workflow
-### Process a Batch of Embryos
 ```{r}
-source("LineageProcessing.R")
-source("CD_Processing.R")
-source("drawEmb.R")
+devtools::load_all("../LinAlign/")
+```
+## Example Workflow
+### Process a Single Embryo
+```{r}
+#load a embryo file
+embryo <- readEmbryoTable(file = "sample_data/20241108_JIM767_25_L5-edit.zip")[[1]]
+```
+#### Plot the embryo nucleus positions in 3D. 
+Plot the lineages
+```{r}
+time = 139
+figO <- drawEmbLine(
+  embryo, 139, 
+  xSize=0.08651, ySize=0.08651, zSize=0.5 #unprocessed data can have different x,y,z scales, specify here
+  )
+figO[[1]]
+```
+#### Optional: Align embryo position/rotation and then plot
+```{r}
+rotatedEmbryo <- totalRePosition(
+  embryo, time = 200, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
+  xSize=0.08651, ySize=0.08651, zSize=0.5) #the xyz dimension is corrected during rotation
+figRotated <- drawEmbLine(
+  rotatedEmbryo, 200, xSize = 1, ySize = 1, zSize = 1
+  )
+figRotated[[1]]
+```
+#### Plot 3D with marker gene expression
+```{r}
+figExp <- drawEmbVal(rotatedEmbryo, time = 139)
+figExp[[1]]
 ```
 
+### Process a Batch of Embryos
 #### Read a directory of embryo tables. 
-
 ```{r} 
-embryos <- CD_In(directory = "JIM767_25/", prefix = "CD", TIME = FALSE, AuxInfo = FALSE)
+embryos <- CD_In(directory = "sample_data/JIM767_25/", prefix = "CD",
+                 time.prefix = "TIME", time.suffix = ".csv",
+                 info.prefix = "", info.suffix = "AuxInfo.csv")
 ```
 
 #### Optional: implement depth correction.
 ```{r}
 # get the correction parameters for the model of fluoresence loss by depth 
-model <- depthCorrectionParm(embryos, lineage = c("ABara", "ABalp", "E"), alignAt = "E", startT = 30, endT = 150, exc_zMin = 0.2, exc_zMax = 1, zMax = 67)
+model <- depthCorrectionParm(embryos, lineage = c("ABara", "ABalp", "E"), alignCell = "E", startT = 30, endT = 150, exc_zMin = 0.2, exc_zMax = 1, zMax = 67)
 # correct the embryos' data with the model
 embryos <- embryos |> 
   dataCorrection(lineage=c("ABara", "ABalp", "P1"), model = model, zMax = 67, exc_zMin = 0.2, exc_zMax = 1)
 ```
-
 #### Plot the reporter expression against time for a particular lineage or specified cells for all embryos.
 ```{r}
 yrange = list(0,16000)
@@ -50,7 +77,7 @@ library(viridis)
 emb_palette <- turbo(length(embNames)) |> setNames(embNames)
 cellsExp <- strsplit("ABal, ABalp, ABalpa, ABalpaa, ABalpaaa, ABalpaaaa, ABalpaaaaa", split=", ")[[1]]
 fig_blot_cells <- embryos|>plotBlotLine(title = 'specific cells example', 
-                            aligningCell = cellsExp[1], alignTime = 0, cells = cellsExp, 
+                            aligningCell = cellsExp[1], align_t = 0, cells = cellsExp, 
                             color_palette = emb_palette,
                             xrange = xrange, yrange = yrange)
 fig_blot_cells
@@ -59,38 +86,8 @@ fig_blot_cells
 # several lineages in each embryo
 lineExp <- c("ABalp", "ABara", "ABplpappp", "ABprpappp")
 fig_blot_lines <- embryos|>plotBlotLine(title = 'lineages example', 
-                            aligningCell = lineExp[1], alignTime = 0, lineages = lineExp, 
+                            aligningCell = lineExp[1], align_t = 0, lineages = lineExp, 
                             color_palette = emb_palette,
                             xrange = xrange, yrange = yrange)
 fig_blot_lines
-```
-
-### Process a Single Embryo
-```{r}
-#subset from the previously loaded embryo batch
-embryo = embryos[["CD"]][[1]]
-```
-#### Plot the embryo nucleus positions in 3D. 
-Plot the lineages
-```{r}
-figO <- drawEmbLine(
-  embryo, 139, 
-  xSize=0.08651, ySize=0.08651, zSize=0.5, #unprocessed data can have different x,y,z scales, specify here
-  showAxis = T)
-figO[[1]]
-```
-Optional: Align embryo position/rotation and then plot
-```{r}
-rotatedEmbryo <- totalRePosition(
-  embryo, time = 139, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
-  xSize=0.08651, ySize=0.08651, zSize=0.5) #the xyz dimension is corrected during rotation
-figRotated <- drawEmbLine(
-  rotatedEmbryo, 139, xSize = 1, ySize = 1, zSize = 1,
-  showAxis = T)
-figRotated[[1]]
-```
-Plot with marker gene expression
-```{r}
-figExp <- drawEmbVal(rotatedEmbryo, time = 139)
-figExp[[1]]
 ```
