@@ -13,14 +13,27 @@
 #' @param shapes a list of shapes to plot each lineage given in "lineages"
 #' @param ReporterForAll color the nucleus points by expression or not (default TRUE)
 #' @param colorScheme a list of at least 2 vectors made of a number between 0 and 1 to specify expression fraction, and a color value to specify color fro that fraction
+#' @param alpha_selected alpha value (opacity) for the selected lineages
+#' @param alpha_other alpha value (opacity) for other lineages
 #' @param maxBlot upper limit for expression coloring
 #' @param minBlot lower limit for expresion coloring
-#' @param xSize size of each x unit in embryoCD dataframe
-#' @param ySize size of each y unit in embryoCD dataframe
-#' @param zSize size of each z unit in embryoCD dataframe
-#' @param center which point in the 3d space does the camera aim at
-#' @param viewPoint where to put the imaginative camera initially
-#' @param showAxis whether to display the x,y,z axis or not
+#' @param xSize size of each x unit in embryoCD dataframe, default 1
+#' @param ySize size of each y unit in embryoCD dataframe, default 1
+#' @param zSize size of each z unit in embryoCD dataframe, default 1
+#' @param center A named list with elements:
+#'   \describe{
+#'     \item{x}{Numeric. X coordinate.}
+#'     \item{y}{Numeric. Y coordinate.}
+#'     \item{z}{Numeric. Z coordinate.}
+#'    }
+#'     which point in the 3d space does the camera aim at, default list(x=0,y=0,z=0)
+#' @param viewPoint A named list with elements:
+#'   \describe{
+#'     \item{x}{Numeric. X coordinate.}
+#'     \item{y}{Numeric. Y coordinate.}
+#'     \item{z}{Numeric. Z coordinate.}
+#'    }
+#'     where to put the imaginative camera initially, default list(x=0,y=0,z=1.8)
 #'
 #' @return a list made of: the plotly figure, a dataframe of the highlighted cells, and a dataframe of cells not highlighted
 #' @export
@@ -29,8 +42,8 @@
 #'
 #' @examples drawEmbVal(Embryo, lineages = c("MS", "E", "C"), shapes = c("circle","x","square"), time = 139)
 drawEmbVal<-function(embryoCD, time, valCol = "blot",
-                     lineages=c("P0"), shapes = NULL,
-                     ReporterForAll=F, colorScheme = NULL,
+                     lineages=NULL, shapes = NULL, cellSize = 10,
+                     ReporterForAll=F, colorScheme = NULL, alpha_selected = NULL, alpha_other = NULL,
                      maxBlot = NULL, minBlot = NULL,
                      xSize=1, ySize=1, zSize=1, aligned = F,#whiteSpace = c(0.05,2),
                      center = list(x=0,y=0,z=0), viewPoint = list(x=0,y=0,z=1.8)){
@@ -45,16 +58,27 @@ drawEmbVal<-function(embryoCD, time, valCol = "blot",
   embDat<- left_join(embDat, cell_value, by = "cell")
   if(is.null(maxBlot)){maxBlot <- max(embDat$value)}
   if(is.null(minBlot)){minBlot <- min(embDat$value)}
-  if(identical(lineages, NULL)){lineages <- list("ABa", "ABp","MS", "E", "C", "D", "P4")} #default lineages
-  if(length(shapes) != length(lineages)){
-    print("\'shapes\' parameters not properly specified, using circles for all")
-    # shapesSet <- schema(F)$traces$scatter$attributes$marker$symbol$values
-    # shapesSet <- grep("[a-z]", shapesSet, value = TRUE)
-    # shapesSet <- shapesSet[-grep("dot", shapesSet)]
-    # shapesSet <- shapesSet[-grep("open", shapesSet)]
-    # shapes <- seq(from = 1, by = 1, length.out = length(lineages))
-    # shapes = shapesSet[shapes]
-    shapes <- rep("circle", times = length(lineages))
+  if(identical(lineages, NULL)){
+    lineages <- c("P0")
+    if(length(shapes) != length(lineages)){
+      shapes <- c("circle")
+    }
+    if(is.null(alpha_selected)){alpha_selected = 0.75}
+    if(is.null(alpha_other)){alpha_other = 0.4}
+  } #default lineages
+  else{
+    if(length(shapes) != length(lineages)){
+      print("\'shapes\' parameters not properly specified, using circles for all")
+      # shapesSet <- schema(F)$traces$scatter$attributes$marker$symbol$values
+      # shapesSet <- grep("[a-z]", shapesSet, value = TRUE)
+      # shapesSet <- shapesSet[-grep("dot", shapesSet)]
+      # shapesSet <- shapesSet[-grep("open", shapesSet)]
+      # shapes <- seq(from = 1, by = 1, length.out = length(lineages))
+      # shapes = shapesSet[shapes]
+      shapes <- rep("circle", times = length(lineages))
+    }
+    if(is.null(alpha_selected)){alpha_selected = 1}
+    if(is.null(alpha_other)){alpha_other = 0.4}
   }
   if(is.null(colorScheme)){colorScheme =  "Viridis"}
   else if(colorScheme=="blackBlueOrange"){
@@ -96,8 +120,12 @@ drawEmbVal<-function(embryoCD, time, valCol = "blot",
     lineage <- lineages[[i]]
     thisSymbol <- shapes[[i]]
     thisCells <- grepCells(CDData = embDat, lineages = lineage, dataReturn = F)
-    fig <- fig%>%AddGroupExp(groupName = lineage, data = embDat, selectedCells = thisCells, symbol = thisSymbol,
-                          colorScheme = colorScheme, colorMin = minBlot, colorMax = maxBlot)
+    fig <- fig%>%AddGroupExp(
+      groupName = lineage, data = embDat, selectedCells = thisCells,
+      symbol = thisSymbol, cellSize = cellSize,
+      colorScheme = colorScheme, colorMin = minBlot, colorMax = maxBlot,
+      opacity = alpha_selected
+    )
     selectCells <- union(selectCells, thisCells)
   }
 
@@ -105,13 +133,13 @@ drawEmbVal<-function(embryoCD, time, valCol = "blot",
   otherCells <- otherCells[!otherCells%in%selectCells]
   if(is.null(lineages)){alpha <- 1}
   else{alpha <- 0.4}
-  fig<-fig%>%plotly::add_trace(name="other cells",
+  fig<-fig%>%plotly::add_trace(name ="other cells",
                        x=embDat[otherCells,"x"],
                        y=embDat[otherCells,"y"],
                        z=embDat[otherCells,"z"], #cells that are not selected will be plotted transparent
                        type = "scatter3d", mode="markers",
-                       marker = list(color=embDat[otherCells,"value"], size = 6, opacity = alpha,
-                                     symbol = "circle-open",
+                       marker = list(color=embDat[otherCells,"value"], size = cellSize,
+                                     opacity = alpha_other, symbol = "circle-open",
                                      #line=list(color = "grey", width=3),
                                      colorscale=colorScheme, cmin=minBlot, cmax=maxBlot)
   )
@@ -126,17 +154,18 @@ drawEmbVal<-function(embryoCD, time, valCol = "blot",
 #' @import plotly
 #' @return modified plotly figure
 AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
-                   colorScheme, colorMin, colorMax, opacity=1){
-  plotlyFig<-plotlyFig|>plotly::add_trace(name=groupName,
-             x=data[selectedCells,"x"],
-             y=data[selectedCells,"y"],
-             z=data[selectedCells,"z"], #cells that are not selected will be plotted transparent
-             type = "scatter3d", mode="markers",
-             marker = list(color=data[selectedCells,"value"], size = 7.5, opacity = 1,
-                           symbol = symbol,
-                           colorscale=colorScheme, cmin=colorMin, cmax=colorMax,
-                           colorbar = list(title="expression", x = 0)
-             )
+                   colorScheme, colorMin, colorMax, cellSize, opacity=1){
+  plotlyFig<-plotlyFig|>plotly::add_trace(
+    name=groupName,
+    x=data[selectedCells,"x"],
+    y=data[selectedCells,"y"],
+    z=data[selectedCells,"z"], #cells that are not selected will be plotted transparent
+    type = "scatter3d", mode="markers",
+    marker = list(color=data[selectedCells,"value"], size = cellSize,
+                 opacity = opacity, symbol = symbol,
+                 colorscale=colorScheme, cmin=colorMin, cmax=colorMax,
+                 colorbar = list(title="expression", x = 0)
+    )
   )
   return(plotlyFig)
 }
@@ -144,19 +173,29 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
 #' drawEmbLine draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage
 #'
 #' @param embryoCD the embryo dataframe with cell, time column, mandatory
-#' @param time which time to plot the embryo, mandatory
+#' @param time numeric, mandatory, which time to plot the embryo, automatically choose the closest time point if no exact match
 #' @param lineages a list of lineages to highlight (plot with the given color and opacity in "colors" and "opacity_s" parameter)
 #' @param colors a list of colors to plot each lineage given in "lineages"
 #' @param opacity_s a list of opacity for each lineage given in "lineages"
-#' @param xSize size of each x unit in embryoCD dataframe
-#' @param ySize size of each y unit in embryoCD dataframe
-#' @param zSize size of each z unit in embryoCD dataframe
+#' @param xSize size of each x unit in embryoCD dataframe, default 1
+#' @param ySize size of each y unit in embryoCD dataframe, default 1
+#' @param zSize size of each z unit in embryoCD dataframe, default 1
 #' @param otherOpacity opacity for cells not specified
 #' @param cellSize single numeric, size of the data points
-#' @param center which point in the 3d space does the camera aim at
-#' @param viewPoint where to put the imaginative camera initially
-#' @param showAxis wherther to diaply axis and axis labels
-#' @param time which time to plot the embryo, mandatory
+#' @param center A named list with elements:
+#'   \describe{
+#'     \item{x}{Numeric. X coordinate.}
+#'     \item{y}{Numeric. Y coordinate.}
+#'     \item{z}{Numeric. Z coordinate.}
+#'    }
+#'     which point in the 3d space does the camera aim at, default list(x=0,y=0,z=0)
+#' @param viewPoint A named list with elements:
+#'   \describe{
+#'     \item{x}{Numeric. X coordinate.}
+#'     \item{y}{Numeric. Y coordinate.}
+#'     \item{z}{Numeric. Z coordinate.}
+#'    }
+#'     where to put the imaginative camera initially, default list(x=0,y=0,z=1.8)
 #'
 #' @return a list made of: the plotly figure, a dataframe of the highlighted cells, and a dataframe of cells not highlighted
 #' @export
@@ -223,7 +262,7 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, opacity_s 
   otherCells <- embDat|>rownames()|>as.integer()
   otherCells <- otherCells[!otherCells%in%selectCells]
   fig<-fig%>%add_trace(
-    name="other cells",
+    name ="other cells",
     x=embDat[otherCells,"x"],
     y=embDat[otherCells,"y"],
     z=embDat[otherCells,"z"], #cells that are not selected will be plotted transparent

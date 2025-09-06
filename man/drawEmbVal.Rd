@@ -12,18 +12,21 @@ drawEmbVal(
   embryoCD,
   time,
   valCol = "blot",
-  lineages = c("P0"),
+  lineages = NULL,
   shapes = NULL,
+  cellSize = 10,
   ReporterForAll = F,
   colorScheme = NULL,
+  alpha_selected = NULL,
+  alpha_other = NULL,
   maxBlot = NULL,
   minBlot = NULL,
   xSize = 1,
   ySize = 1,
   zSize = 1,
+  aligned = F,
   center = list(x = 0, y = 0, z = 0),
-  viewPoint = list(x = 0, y = 0, z = 1.8),
-  showAxis = F
+  viewPoint = list(x = 0, y = 0, z = 1.8)
 )
 }
 \arguments{
@@ -41,21 +44,35 @@ drawEmbVal(
 
 \item{colorScheme}{a list of at least 2 vectors made of a number between 0 and 1 to specify expression fraction, and a color value to specify color fro that fraction}
 
+\item{alpha_selected}{alpha value (opacity) for the selected lineages}
+
+\item{alpha_other}{alpha value (opacity) for other lineages}
+
 \item{maxBlot}{upper limit for expression coloring}
 
 \item{minBlot}{lower limit for expresion coloring}
 
-\item{xSize}{size of each x unit in embryoCD dataframe}
+\item{xSize}{size of each x unit in embryoCD dataframe, default 1}
 
-\item{ySize}{size of each y unit in embryoCD dataframe}
+\item{ySize}{size of each y unit in embryoCD dataframe, default 1}
 
-\item{zSize}{size of each z unit in embryoCD dataframe}
+\item{zSize}{size of each z unit in embryoCD dataframe, default 1}
 
-\item{center}{which point in the 3d space does the camera aim at}
+\item{center}{A named list with elements:
+\describe{
+\item{x}{Numeric. X coordinate.}
+\item{y}{Numeric. Y coordinate.}
+\item{z}{Numeric. Z coordinate.}
+}
+which point in the 3d space does the camera aim at, default list(x=0,y=0,z=0)}
 
-\item{viewPoint}{where to put the imaginative camera initially}
-
-\item{showAxis}{whether to display the x,y,z axis or not}
+\item{viewPoint}{A named list with elements:
+\describe{
+\item{x}{Numeric. X coordinate.}
+\item{y}{Numeric. Y coordinate.}
+\item{z}{Numeric. Z coordinate.}
+}
+where to put the imaginative camera initially, default list(x=0,y=0,z=1.8)}
 }
 \value{
 a list made of: the plotly figure, a dataframe of the highlighted cells, and a dataframe of cells not highlighted

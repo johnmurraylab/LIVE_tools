@@ -13,6 +13,7 @@ AddGroupExp(
   colorScheme,
   colorMin,
   colorMax,
+  cellSize,
   opacity = 1
 )
 }

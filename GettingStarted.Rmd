@@ -31,8 +31,8 @@ Plot the lineages
 time = 139
 figO <- drawEmbLine(
   embryo, 139, 
-  xSize=0.08651, ySize=0.08651, zSize=0.5, #unprocessed data can have different x,y,z scales, specify here
-  showAxis = T)
+  xSize=0.08651, ySize=0.08651, zSize=0.5 #unprocessed data can have different x,y,z scales, specify here
+  )
 figO[[1]]
 ```
 #### Optional: Align embryo position/rotation and then plot
@@ -41,8 +41,8 @@ rotatedEmbryo <- totalRePosition(
   embryo, time = 200, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
   xSize=0.08651, ySize=0.08651, zSize=0.5) #the xyz dimension is corrected during rotation
 figRotated <- drawEmbLine(
-  rotatedEmbryo, 200, xSize = 1, ySize = 1, zSize = 1,
-  showAxis = T)
+  rotatedEmbryo, 200, xSize = 1, ySize = 1, zSize = 1
+  )
 figRotated[[1]]
 ```
 #### Plot 3D with marker gene expression

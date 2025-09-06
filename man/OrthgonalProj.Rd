@@ -2,7 +2,7 @@
 % Please edit documentation in R/LineageProcessing.R
 \name{OrthgonalProj}
 \alias{OrthgonalProj}
-\title{Gram-Schmidt Process gives the orthogonal component to AP axis}
+\title{OrthgonalProj}
 \usage{
 OrthgonalProj(v, u)
 }

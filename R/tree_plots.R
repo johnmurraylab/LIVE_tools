@@ -1,9 +1,16 @@
-#' tree_plots.R
-#' plot and save trees from embryo cell tracking tables
-
 #' plot_trees
 #' @description
 #' tree plots for a list of embryo cell tracking data
+
+#'
+#' @details
+#' This function uses [ggtree] (Bioconductor) to plot trees.
+#' #' The `ggtree` package must be installed separately:
+#' ```r
+#' if (!requireNamespace("BiocManager", quietly = TRUE))
+#'     install.packages("BiocManager")
+#' BiocManager::install("ggtree")
+#' ```
 #' @param inDir directory of embryo cell tracking files to plot into trees
 #' @param root root cell of the tree
 #' @param plotExpression whether to color each branch by the average expression of the cell
@@ -157,130 +164,141 @@ CD_tree_plot <- function(file, root="P0",
                          exp_col="blot", cell_col="cell", time_col="time",
                          extra_branch_l=15, exp_legend="Expression"){
 
-    CD <- read.csv(file, header=T)
-    if(is.numeric(start_time)){
-      CD <- CD[CD$time >= start_time,]
-    }
-    if(is.numeric(end_time)){
-      CD <- CD[CD$time <= end_time,]
-      X_Max <- (end_time-start_time)+15
-    }
-    else{X_Max <- NA}
+  if (!requireNamespace("ggtree", quietly = TRUE)) {
+    stop(
+      "Package 'ggtree' is required for this function. It is a non-CRAN package.
+      Please install it with bioconductor:
+      if (!require('BiocManager', quietly = TRUE))
+        install.packages('BiocManager')
+      BiocManager::install('ggtree')",
+      call. = FALSE
+    )
+  }
 
-    if(cell_col != "cell"){
-        colnames(CD)[colnames(CD) == cell_col] <- "cell"
-    }
-    if(time_col != "time"){
-        colnames(CD)[colnames(CD) == time_col] <- "time"
-    }
-    CD <- CD|>drop_na(time)
+  CD <- read.csv(file, header=T)
+  if(is.numeric(start_time)){
+    CD <- CD[CD$time >= start_time,]
+  }
+  if(is.numeric(end_time)){
+    CD <- CD[CD$time <= end_time,]
+    X_Max <- (end_time-start_time)+15
+  }
+  else{X_Max <- NA}
 
-    CD <- CD[order(CD$cell),]
+  if(cell_col != "cell"){
+      colnames(CD)[colnames(CD) == cell_col] <- "cell"
+  }
+  if(time_col != "time"){
+      colnames(CD)[colnames(CD) == time_col] <- "time"
+  }
+  CD <- CD|>drop_na(time)
 
-    cells<-unique(CD$cell)
-    birthTime <- aggregate(CD$time,by=list(CD$cell), FUN=min)[,2]
-    names(birthTime) <- cells
-    endTime <- aggregate(CD$time,by=list(CD$cell), FUN=max)[,2]
-    names(endTime) <- cells
-    length <- (endTime-birthTime) + 1
-    parents <- sapply(cells,GetParent)
-    hasParent <- cells %in% cells[parents %in% cells]
-    names(hasParent) <- cells
+  CD <- CD[order(CD$cell),]
 
-    ##debugging code
-    ##message(paste("Eal", birthTime["Eal"], endTime["Eal"], length["Eal"], "Ear", birthTime["Ear"], endTime["Ear"],length["Ear"],sep=" "))
+  cells<-unique(CD$cell)
+  birthTime <- aggregate(CD$time,by=list(CD$cell), FUN=min)[,2]
+  names(birthTime) <- cells
+  endTime <- aggregate(CD$time,by=list(CD$cell), FUN=max)[,2]
+  names(endTime) <- cells
+  length <- (endTime-birthTime) + 1
+  parents <- sapply(cells,GetParent)
+  hasParent <- cells %in% cells[parents %in% cells]
+  names(hasParent) <- cells
 
-    ##add dummy branches to connect trees to root P0 or P. Each gets the same minute/tp length
-    while(sum(!hasParent & !(cells %in% c("P0", "P"))) > 0){
-        message("ADDING PARENTS FOR:", sum(!hasParent), "CELLS", sep=" ")
-        message(paste(cells[!hasParent], collapse=" "))
-        newCells <- unique(parents[cells[!hasParent]])
-        cells <- c(cells, newCells)
-        length <- c(length, rep(extra_branch_l,length(newCells)))
-        parents <- c(parents, sapply(newCells,GetParent))
-        names(length) <- cells
-        names(parents) <- cells
-        hasParent <- cells %in% cells[parents %in% cells]
-        names(hasParent) <- cells
-    }
+  ##debugging code
+  ##message(paste("Eal", birthTime["Eal"], endTime["Eal"], length["Eal"], "Ear", birthTime["Ear"], endTime["Ear"],length["Ear"],sep=" "))
 
-    hasDaughter <- cells %in% parents
-    names(hasDaughter) <- cells
+  ##add dummy branches to connect trees to root P0 or P. Each gets the same minute/tp length
+  while(sum(!hasParent & !(cells %in% c("P0", "P"))) > 0){
+      message("ADDING PARENTS FOR:", sum(!hasParent), "CELLS", sep=" ")
+      message(paste(cells[!hasParent], collapse=" "))
+      newCells <- unique(parents[cells[!hasParent]])
+      cells <- c(cells, newCells)
+      length <- c(length, rep(extra_branch_l,length(newCells)))
+      parents <- c(parents, sapply(newCells,GetParent))
+      names(length) <- cells
+      names(parents) <- cells
+      hasParent <- cells %in% cells[parents %in% cells]
+      names(hasParent) <- cells
+  }
 
-    ##QC
-    sisters <- sapply(cells,GetSister)
-    hasSister <- cells %in% sisters
-    message(paste(sum(!hasSister),"cells don't have sisters - should equal one for P0"))
+  hasDaughter <- cells %in% parents
+  names(hasDaughter) <- cells
 
-    tree_table <- data.frame(parents,sisters,length,hasDaughter)
-    newick_tree <- MakeNewick(tree_table, root=root)
- ##   message(newick_tree)
-    ## load into ggtree
-    tree <- read.tree(text=newick_tree)
+  ##QC
+  sisters <- sapply(cells,GetSister)
+  hasSister <- cells %in% sisters
+  message(paste(sum(!hasSister),"cells don't have sisters - should equal one for P0"))
+
+  tree_table <- data.frame(parents,sisters,length,hasDaughter)
+  newick_tree <- MakeNewick(tree_table, root=root)
+##   message(newick_tree)
+  ## load into ggtree
+  tree <- read.tree(text=newick_tree)
 
 ##    message(exp_col)
 ##    message(colnames(CD))
-    if(plotExpression){
-        funAvg <- function(X, lower, upper){
-          lowerV <- quantile(X, lower)
-          upperV <- quantile(X, upper)
-          Xfiltered <- X[X>=lowerV[[1]]]
-          Xfiltered <- Xfiltered[Xfiltered<=upperV[[1]]]
-          return(mean(Xfiltered))
-        }
-        blot <- aggregate(CD[,exp_col], by=list(CD$cell), FUN=funAvg, lower=lowerBound, upper = upperBound)
-        rownames(blot) <- blot[,1]
-        blot[is.na(blot[,2]), 2] <- min_gain
-        ##blot <- blot[-1]
-        ##fixme consider NA
-        blot[setdiff(union(tree$tip.label, tree$node.label),rownames(blot)),2] <- 0
-        blot[,1] <- rownames(blot)
-        colnames(blot) <- c("label", "blot")
+  if(plotExpression){
+      funAvg <- function(X, lower, upper){
+        lowerV <- quantile(X, lower)
+        upperV <- quantile(X, upper)
+        Xfiltered <- X[X>=lowerV[[1]]]
+        Xfiltered <- Xfiltered[Xfiltered<=upperV[[1]]]
+        return(mean(Xfiltered))
+      }
+      blot <- aggregate(CD[,exp_col], by=list(CD$cell), FUN=funAvg, lower=lowerBound, upper = upperBound)
+      rownames(blot) <- blot[,1]
+      blot[is.na(blot[,2]), 2] <- min_gain
+      ##blot <- blot[-1]
+      ##fixme consider NA
+      blot[setdiff(union(tree$tip.label, tree$node.label),rownames(blot)),2] <- 0
+      blot[,1] <- rownames(blot)
+      colnames(blot) <- c("label", "blot")
 
-        if(is.numeric(min_gain)){blot[blot[,2] < min_gain,2] <- min_gain}
-        if(is.numeric(max_gain)){blot[blot[,2] > max_gain,2] <- max_gain
-          message("adjusting max gain")}
+      if(is.numeric(min_gain)){blot[blot[,2] < min_gain,2] <- min_gain}
+      if(is.numeric(max_gain)){blot[blot[,2] > max_gain,2] <- max_gain
+        message("adjusting max gain")}
 
-        g <- ggtree::ggtree(tree, ladderize=F) %<+% blot
-        g <- g + xlim(0, X_Max) + ggtree::geom_tree(aes(color=blot))
+      g <- ggtree::ggtree(tree, ladderize=F) %<+% blot
+      g <- g + xlim(0, X_Max) + ggtree::geom_tree(aes(color=blot))
 
-        #define color scaling and labels according to transform argument
-        if(transform == "identity"){
-          newMin <- min_gain
-          newMax <- max_gain
-          midpoint <- (newMin+newMax)/2
-        }
-        else if(transform == "log2"){
-          newMin <- log2(min_gain)
-          newMax <- log2(max_gain)
-          midpoint <- 2**((newMin+newMax)/2)
-        }
-        else if(transform == "log10"){
-          newMin <- log10(min_gain)
-          newMax <- log10(max_gain)
-          midpoint <- 10**((newMin+newMax)/2)
-        }
-        else if(transform == "log"){
-          ewMin <- log(min_gain)
-          newMax <- log(max_gain)
-          midpoint <- exp((newMin+newMax)/2)
-        }
+      #define color scaling and labels according to transform argument
+      if(transform == "identity"){
+        newMin <- min_gain
+        newMax <- max_gain
+        midpoint <- (newMin+newMax)/2
+      }
+      else if(transform == "log2"){
+        newMin <- log2(min_gain)
+        newMax <- log2(max_gain)
+        midpoint <- 2**((newMin+newMax)/2)
+      }
+      else if(transform == "log10"){
+        newMin <- log10(min_gain)
+        newMax <- log10(max_gain)
+        midpoint <- 10**((newMin+newMax)/2)
+      }
+      else if(transform == "log"){
+        ewMin <- log(min_gain)
+        newMax <- log(max_gain)
+        midpoint <- exp((newMin+newMax)/2)
+      }
 
-        g <- g + ggplot2::scale_color_gradient2(name=exp_legend,
-                                       transform = transform,
-                                       low=rgb(0,0,0.9),mid=rgb(0.9,0.85,0.8),high="red",
-                                       midpoint = midpoint, lim = c(min_gain,max_gain))
-    }else{
-        g <- ggtree::ggtree(tree, ladderize=F)+ xlim(0, X_Max)
-    }
+      g <- g + ggplot2::scale_color_gradient2(name=exp_legend,
+                                     transform = transform,
+                                     low=rgb(0,0,0.9),mid=rgb(0.9,0.85,0.8),high="red",
+                                     midpoint = midpoint, lim = c(min_gain,max_gain))
+  }else{
+      g <- ggtree::ggtree(tree, ladderize=F)+ xlim(0, X_Max)
+  }
 
-    if(tip_lab){
-        g <- g + ggtree::xlim(0, X_Max*1.1) + ggtree::geom_tiplab()
-    }
-    if(node_lab){
-        g <- g + ggtree::geom_nodelab()
-    }
-    g <- g + ggtree::theme_tree2()
-    return(g)
+  if(tip_lab){
+      g <- g + ggtree::xlim(0, X_Max*1.1) + ggtree::geom_tiplab()
+  }
+  if(node_lab){
+      g <- g + ggtree::geom_nodelab()
+  }
+  g <- g + ggtree::theme_tree2()
+  return(g)
 }
 

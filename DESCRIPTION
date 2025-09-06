@@ -6,9 +6,15 @@ Authors@R:
 Description: A C. elegans lineage analysis toolkit works from a simple tabular data format for each embryo, that can be produced easily from StarryNite output, or by parsing Acetree output .zip file into tables. Functionalities include aligning embryo by time and rotation, as well as visualization methods to investigate reporter expression or cell positions
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Imports: 
     data.table,
     dplyr,
     ggtree,
-    plotly
+    plotly,
+    reticulate,
+    ggplot2
+Suggests:
+    BiocManager,
+    ggtree,
+License: MIT + file LICENSE

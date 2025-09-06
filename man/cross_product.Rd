@@ -2,7 +2,7 @@
 % Please edit documentation in R/LineageProcessing.R
 \name{cross_product}
 \alias{cross_product}
-\title{vector cross-product for orthogonal vector}
+\title{cross_product}
 \usage{
 cross_product(v, u)
 }

@@ -2,9 +2,7 @@
 % Please edit documentation in R/tree_plots.R
 \name{plot_trees}
 \alias{plot_trees}
-\title{tree_plots.R
-plot and save trees from embryo cell tracking tables
-plot_trees}
+\title{plot_trees}
 \usage{
 plot_trees(
   inDir,
@@ -72,4 +70,13 @@ plot_trees(
 }
 \description{
 tree plots for a list of embryo cell tracking data
+}
+\details{
+This function uses \link[ggtree:ggtree]{ggtree::ggtree} (Bioconductor) to plot trees.
+#' The \code{ggtree} package must be installed separately:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("ggtree")
+}\if{html}{\out{</div>}}
 }
