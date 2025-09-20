@@ -174,13 +174,13 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
 #'
 #' @param embryoCD the embryo dataframe with cell, time column, mandatory
 #' @param time numeric, mandatory, which time to plot the embryo, automatically choose the closest time point if no exact match
-#' @param lineages a list of lineages to highlight (plot with the given color and opacity in "colors" and "opacity_s" parameter)
+#' @param lineages a list of lineages to highlight (plot with the given color and opacity in "colors" and "alphas" parameter)
 #' @param colors a list of colors to plot each lineage given in "lineages"
-#' @param opacity_s a list of opacity for each lineage given in "lineages"
+#' @param alphas a list of alpha i.e. opacity for each lineage given in "lineages"
 #' @param xSize size of each x unit in embryoCD dataframe, default 1
 #' @param ySize size of each y unit in embryoCD dataframe, default 1
 #' @param zSize size of each z unit in embryoCD dataframe, default 1
-#' @param otherOpacity opacity for cells not specified
+#' @param alpha_other opacity for cells not specified
 #' @param cellSize single numeric, size of the data points
 #' @param center A named list with elements:
 #'   \describe{
@@ -203,9 +203,9 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
 #' @import viridis
 #'
 #' @examples drawEmbVal(Embryo, lineages = c("MS", "E", "C"), colors = c(rgb(1,0,0), rgb(1,0,1), rgb(0,0,1)), time = 139)
-drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, opacity_s = NULL,
+drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = NULL,
                         xSize=1, ySize=1, zSize=1, aligned = F,
-                        otherOpacity = 0.2, cellSize = 7.5,
+                        alpha_other = 0.2, cellSize = 7.5,
                         center = list(x=0,y=0,z=0), viewPoint = list(x=0,y=0,z=1.8)){
   embDat <- embryoCD|>grepCells(lineages = "ALL", times = time)
   row.names(embDat)<- NULL
@@ -214,17 +214,21 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, opacity_s 
   embDat$z <- embDat$z*zSize
   if(identical(lineages, NULL)){
     lineages <- list("ABa", "ABp","MS", "E", "C", "D", "P4") #default lineages
-    opacity_s <- rep(0.75, 7)
+    if(identical(alphas, NULL)){alphas <- rep(0.75, 7)}
+    if(identical(colors, NULL)){colors <- viridis::viridis_pal(option = "H")(7)}
   }
-  traceCount <- length(lineages)
-  if(length(colors) != traceCount){
-    print("\'colors\' argument not properly specified")
-    colors <- viridis::viridis_pal(option = "H")(traceCount)
+  else{
+    traceCount <- length(lineages)
+    if(length(colors) != traceCount){
+      print("\'colors\' argument not properly specified")
+      colors <- viridis::viridis_pal(option = "H")(traceCount)
+    }
+    if(length(alphas) != traceCount){
+      print("\'alphas\' argument not properly specified")
+      alphas <- rep(1, traceCount)
+    }
   }
-  if(length(opacity_s) != traceCount){
-    print("\'opacity_s\' argument not properly specified")
-    opacity_s <- rep(1, traceCount)
-  }
+
   if(aligned){
     xtitle <- "AB(\U00B5m)"
     ytitle <- "LR(\U00B5m)"
@@ -252,7 +256,7 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, opacity_s 
   for (i in seq_along(lineages)) { #add each lineage as a trace
     lineage <- lineages[[i]]
     color <- colors[[i]]
-    opacity <- opacity_s[[i]]
+    opacity <- alphas[[i]]
     thisCells <- grepCells(CDData = embDat, lineages = lineage, dataReturn = F)
     fig <- fig|>AddGroupLine(groupName = lineage,
                              data = embDat, selectedCells = thisCells,
@@ -267,7 +271,7 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, opacity_s 
     y=embDat[otherCells,"y"],
     z=embDat[otherCells,"z"], #cells that are not selected will be plotted transparent
     type = "scatter3d", mode="markers",
-    marker = list(color="black", size = cellSize, opacity = otherOpacity, symbol = "circle")
+    marker = list(color="black", size = cellSize, opacity = alpha_other, symbol = "circle")
   )
   return(list(fig, embDat[selectCells,], embDat[-selectCells,]))
 }
