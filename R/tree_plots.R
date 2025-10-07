@@ -1,7 +1,7 @@
 #' plot_trees
 #' @description
 #' tree plots for a list of embryo cell tracking data
-
+#' generate one file for each CD file in the given directory, with consistent parameters
 #'
 #' @details
 #' This function uses [ggtree] (Bioconductor) to plot trees.
@@ -46,7 +46,8 @@ plot_trees <- function(inDir, root = "P0",
   embNames <- gsub("(.*)\\.csv$", "\\1", files)
   for (i in seq_along(files)) {
     directory <- paste0(inDir,files[i])
-    tree <- CD_tree_plot(directory, root = root, transform = transform,
+    CD <- read.csv(file, header=T)
+    tree <- CD_tree_plot(CD, root = root, transform = transform,
                          start_time = start_time, end_time = end_time,
                          exp_col=exp_col, cell_col=cell_col, time_col=time_col,
                          plotExpression = plotExpression, min_gain=min_gain,max_gain=max_gain,
@@ -134,7 +135,7 @@ MakeNewick <- function(data, root="P0", outer=TRUE,verbose=FALSE, tiplab = TRUE,
 #' @description
 #' tree plots for a list of embryo cell tracking data
 #'
-#' @param file directory of embryo cell tracking file
+#' @param CD dataframe for the CD table
 #' @param root root cell of the tree
 #' @param min_gain for color scale, the value corresponding to "minimum" color
 #' @param max_gain for color scale, the value corresponding to "maximum" color
@@ -156,7 +157,8 @@ MakeNewick <- function(data, root="P0", outer=TRUE,verbose=FALSE, tiplab = TRUE,
 #' @export
 #' @import ggtree
 #' @import ggplot2
-CD_tree_plot <- function(file, root="P0",
+#' @import tidyr
+CD_tree_plot <- function(CD, root="P0",
                          min_gain=-1000, max_gain=FALSE, transform = "identity",
                          start_time = FALSE, end_time=FALSE,
                          plotExpression=TRUE, lowerBound = 0.4, upperBound = 0.97,
@@ -175,7 +177,6 @@ CD_tree_plot <- function(file, root="P0",
     )
   }
 
-  CD <- read.csv(file, header=T)
   if(is.numeric(start_time)){
     CD <- CD[CD$time >= start_time,]
   }

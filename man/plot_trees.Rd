@@ -70,6 +70,7 @@ plot_trees(
 }
 \description{
 tree plots for a list of embryo cell tracking data
+generate one file for each CD file in the given directory, with consistent parameters
 }
 \details{
 This function uses \link[ggtree:ggtree]{ggtree::ggtree} (Bioconductor) to plot trees.

@@ -9,12 +9,12 @@ drawEmbLine(
   time,
   lineages = NULL,
   colors = NULL,
-  opacity_s = NULL,
+  alphas = NULL,
   xSize = 1,
   ySize = 1,
   zSize = 1,
   aligned = F,
-  otherOpacity = 0.2,
+  alpha_other = 0.2,
   cellSize = 7.5,
   center = list(x = 0, y = 0, z = 0),
   viewPoint = list(x = 0, y = 0, z = 1.8)
@@ -25,11 +25,11 @@ drawEmbLine(
 
 \item{time}{numeric, mandatory, which time to plot the embryo, automatically choose the closest time point if no exact match}
 
-\item{lineages}{a list of lineages to highlight (plot with the given color and opacity in "colors" and "opacity_s" parameter)}
+\item{lineages}{a list of lineages to highlight (plot with the given color and opacity in "colors" and "alphas" parameter)}
 
 \item{colors}{a list of colors to plot each lineage given in "lineages"}
 
-\item{opacity_s}{a list of opacity for each lineage given in "lineages"}
+\item{alphas}{a list of alpha i.e. opacity for each lineage given in "lineages"}
 
 \item{xSize}{size of each x unit in embryoCD dataframe, default 1}
 
@@ -37,7 +37,7 @@ drawEmbLine(
 
 \item{zSize}{size of each z unit in embryoCD dataframe, default 1}
 
-\item{otherOpacity}{opacity for cells not specified}
+\item{alpha_other}{opacity for cells not specified}
 
 \item{cellSize}{single numeric, size of the data points}
 

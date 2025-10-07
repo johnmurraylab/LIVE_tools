@@ -1,5 +1,5 @@
-Package: LinAlign
-Title: Analyze C. elegans Embryo Lineages Captured By Starry Nite and Acetree
+Package: LIVE_tools
+Title: Lineage Visualization for Embryos
 Version: 0.0.0.9000
 Authors@R: 
     person("Yuntian", "Gan", , "brucegansto@gmail.com", role = c("aut", "cre"))
@@ -13,7 +13,9 @@ Imports:
     ggtree,
     plotly,
     reticulate,
-    ggplot2
+    ggplot2,
+    tidyverse,
+    tidyr
 Suggests:
     BiocManager,
     ggtree,

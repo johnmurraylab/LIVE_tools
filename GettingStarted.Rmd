@@ -50,6 +50,12 @@ figRotated[[1]]
 figExp <- drawEmbVal(rotatedEmbryo, time = 139)
 figExp[[1]]
 ```
+#### Lineage Tree colored by Expression
+```{r}
+treeplot <- CD_tree_plot(
+  rotatedEmbryo, min_gain=-1000, max_gain=16000, transform = "identity", root = "MSaa")
+treeplot
+```
 
 ### Process a Batch of Embryos
 #### Read a directory of embryo tables. 

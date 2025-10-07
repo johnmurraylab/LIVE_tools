@@ -5,7 +5,7 @@
 \title{CD_tree_plot}
 \usage{
 CD_tree_plot(
-  file,
+  CD,
   root = "P0",
   min_gain = -1000,
   max_gain = FALSE,
@@ -25,7 +25,7 @@ CD_tree_plot(
 )
 }
 \arguments{
-\item{file}{directory of embryo cell tracking file}
+\item{CD}{dataframe for the CD table}
 
 \item{root}{root cell of the tree}
 
