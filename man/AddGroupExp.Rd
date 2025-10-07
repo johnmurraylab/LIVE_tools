@@ -14,8 +14,29 @@ AddGroupExp(
   colorMin,
   colorMax,
   cellSize,
-  opacity = 1
+  alpha = 1
 )
+}
+\arguments{
+\item{plotlyFig}{the plotly figure object to add extra data point (trace) upon}
+
+\item{groupName}{name of the new trace (i.e. cell group)}
+
+\item{data}{CD dataframe that have the entries of cells of interest as a subset of its rows}
+
+\item{symbol}{the symbol that will represent the cell in 3D plot}
+
+\item{colorScheme}{the colorScheme to display expression level}
+
+\item{colorMin}{the color for minimum expression (do not use if \code{colorScheme} is specified)}
+
+\item{colorMax}{the color for max expression (do not use if \code{colorScheme} is specified)}
+
+\item{cellSize}{size of the cells in plot}
+
+\item{alpha}{opacity of the cells in plot, 0 meas totally transparent, 1 means no transparency}
+
+\item{selectecCells}{row indices of the cells to add to the figure}
 }
 \value{
 modified plotly figure

@@ -1,4 +1,4 @@
-Package: LIVE_tools
+Package: LIVEtools
 Title: Lineage Visualization for Embryos
 Version: 0.0.0.9000
 Authors@R: 
@@ -14,8 +14,8 @@ Imports:
     plotly,
     reticulate,
     ggplot2,
-    tidyverse,
-    tidyr
+    tidyr,
+    viridis
 Suggests:
     BiocManager,
     ggtree,

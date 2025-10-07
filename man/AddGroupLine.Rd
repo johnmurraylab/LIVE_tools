@@ -4,15 +4,22 @@
 \alias{AddGroupLine}
 \title{AddGroupLine}
 \usage{
-AddGroupLine(
-  plotlyFig,
-  groupName,
-  data,
-  selectedCells,
-  color,
-  opacity,
-  cellSize
-)
+AddGroupLine(plotlyFig, groupName, data, selectedCells, color, alpha, cellSize)
+}
+\arguments{
+\item{plotlyFig}{the plotly figure object to add extra data point (trace) upon}
+
+\item{groupName}{name of the new trace (i.e. cell group)}
+
+\item{data}{CD dataframe that have the entries of cells of interest as a subset of its rows}
+
+\item{color}{color od this group of cells}
+
+\item{alpha}{opacity of the cells in plot, 0 meas totally transparent, 1 means no transparency}
+
+\item{cellSize}{size of the cells in plot}
+
+\item{selectecCells}{row indices of the cells to add to the figure}
 }
 \value{
 modified plotly figure

@@ -24,8 +24,3 @@ modified list of CD-like dataFrames
 'align' the cell time of a list of CD-like dataFrame by a specific cell stage
 so that there is a "common" reference point (like common start time of lineage)
 }
-\examples{
-`alignTime(datList, alignCell="MSa", alignPoint = 100, alignTime = "mean", alignBlot = "no")`
-to have every CD-like dataFrame have the end time of MSa cell equals the mean end time of MSa cell
-all other cell time points will be moved in parallel
-}

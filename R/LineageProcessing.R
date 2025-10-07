@@ -73,9 +73,6 @@ timeAvg <- function(datList, attribute){
 #' @param alignBlot whether and method to align the blot values together default `FALSE` for not align, "mean" for aligning the mean values together (by addition/subtraction)
 #' @return modified list of CD-like dataFrames
 #' @export
-#' @examples `alignTime(datList, alignCell="MSa", alignPoint = 100, alignTime = "mean", alignBlot = "no")`
-#' to have every CD-like dataFrame have the end time of MSa cell equals the mean end time of MSa cell
-#' all other cell time points will be moved in parallel
 alignTime <- function(datList, alignCell, alignPoint = 1, align_t = 0, alignBlot = F){
   rawTimes <- datList|>lapply(function(df){
     df[with(df, cell==alignCell),'time']|>quantile(alignPoint)})
@@ -343,7 +340,7 @@ blotAvgFun <- function(datList, cutoff = 0.5){
 #' @return a list of regular expressions for cell
 #' @export
 #'
-#' @examples lineageNames(c("EMS", "C"))
+#' @examples lineageNames("EMS")
 lineageNames <- function(lineage){
   P4 <- c("P4", "Z2", "Z3")
   P3 <- c("P3", "D", P4)

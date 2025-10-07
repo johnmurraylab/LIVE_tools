@@ -1,3 +1,5 @@
+^renv$
+^renv\.lock$
 ^LinAlign\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$

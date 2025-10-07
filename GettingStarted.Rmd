@@ -16,8 +16,44 @@ Intended to process data tables where:
 `LineageProcessing.R` contains functions to process one single embryo entity, and slices from embryo entities, which are the dependencies of other codes. INcluding functions 
 `CD_Processing.R` are functions to work with a directory of several embryo data tables. Including functions to load data tables, retrieve specific cells and lineages data from multiple embryos, and operations that are only possible with multiple embryos (e.g. depth correction)
 `drawEmb.R` contains functions that plot all nucleus in an embryo in 3D
+
+## Installation
+efore running the examples below, please ensure the package and its dependencies are installed.
+
+### 1. Install Dependencies
+
+This package depends on several CRAN and Bioconductor packages.  
+You can install all dependencies automatically using the following commands:
+
+#### Install CRAN dependencies
 ```{r}
-devtools::load_all("../LinAlign/")
+cran_deps <- c(
+  "data.table", "dplyr", "ggtree", "plotly", "reticulate", "ggplot2", "tidyr", "viridis" 
+) # <-- replace with actual CRAN dependencies from DESCRIPTION
+cran_missing <- setdiff(cran_deps, rownames(installed.packages()))
+if (length(cran_missing)) {
+  install.packages(cran_missing)
+}
+```
+#### Install Bioconductor dependencies
+```{r}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager") #first, make sure Bioconductor package manager is present
+
+bioc_deps <- c(
+  "ggtree" #Bioconductor packages to install
+)
+bioc_missing <- setdiff(bioc_deps, rownames(installed.packages())) #check missing and install
+if (length(bioc_missing)) {
+  BiocManager::install(bioc_missing)
+}
+```
+### Install LIVEtools
+Download LIVEtools release package from github:
+
+Place it in your R working directory, and run the following command
+```{r}
+install.packages("mypackage_1.0.0.tar.gz", repos = NULL, type = "source")
 ```
 ## Example Workflow
 ### Process a Single Embryo
@@ -78,13 +114,11 @@ embryos <- embryos |>
 yrange = list(0,16000)
 xrange = list(-50,150)
 # several specified cells in each embryo
-embNames <- names(embryos[["CD"]]) #set up palette to make color consistent for the same embryo across different plots
-library(viridis)
-emb_palette <- turbo(length(embNames)) |> setNames(embNames)
+embNames <- names(embryos[["CD"]]) 
+emb_palette <- viridis::viridis(length(embNames)) |> setNames(embNames)#set up palette to make color consistent for the same embryo across different plots
 cellsExp <- strsplit("ABal, ABalp, ABalpa, ABalpaa, ABalpaaa, ABalpaaaa, ABalpaaaaa", split=", ")[[1]]
-fig_blot_cells <- embryos|>plotBlotLine(title = 'specific cells example', 
+fig_blot_cells <- embryos|>plotBlotLine(title = 'specific cells example', color_palette = emb_palette, 
                             aligningCell = cellsExp[1], align_t = 0, cells = cellsExp, 
-                            color_palette = emb_palette,
                             xrange = xrange, yrange = yrange)
 fig_blot_cells
 ```

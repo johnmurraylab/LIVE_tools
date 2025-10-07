@@ -63,6 +63,3 @@ a list made of: the plotly figure, a dataframe of the highlighted cells, and a d
 \description{
 drawEmbLine draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage
 }
-\examples{
-drawEmbVal(Embryo, lineages = c("MS", "E", "C"), colors = c(rgb(1,0,0), rgb(1,0,1), rgb(0,0,1)), time = 139)
-}

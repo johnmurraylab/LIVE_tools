@@ -16,5 +16,5 @@ a list of regular expressions for cell
 returns all possible starts of daughter lineages (including the mother cell itself) under a given lineage/mother cell
 }
 \examples{
-lineageNames(c("EMS", "C"))
+lineageNames("EMS")
 }

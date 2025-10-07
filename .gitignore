@@ -19,3 +19,5 @@ README.Rmd
 drawEmb.Rmd
 readStarryNiteZip.Rmd
 .Rprofile
+renv/*
+renv*

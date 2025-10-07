@@ -39,8 +39,6 @@
 #' @export
 #' @import plotly
 #' @import viridis
-#'
-#' @examples drawEmbVal(Embryo, lineages = c("MS", "E", "C"), shapes = c("circle","x","square"), time = 139)
 drawEmbVal<-function(embryoCD, time, valCol = "blot",
                      lineages=NULL, shapes = NULL, cellSize = 10,
                      ReporterForAll=F, colorScheme = NULL, alpha_selected = NULL, alpha_other = NULL,
@@ -124,7 +122,7 @@ drawEmbVal<-function(embryoCD, time, valCol = "blot",
       groupName = lineage, data = embDat, selectedCells = thisCells,
       symbol = thisSymbol, cellSize = cellSize,
       colorScheme = colorScheme, colorMin = minBlot, colorMax = maxBlot,
-      opacity = alpha_selected
+      alpha = alpha_selected
     )
     selectCells <- union(selectCells, thisCells)
   }
@@ -150,11 +148,20 @@ drawEmbVal<-function(embryoCD, time, valCol = "blot",
 #' AddGroupExp
 #' @description
 #' auxiliary function for `drawEmbVal`
-#'
+#' @param plotlyFig the plotly figure object to add extra data point (trace) upon
+#' @param groupName name of the new trace (i.e. cell group)
+#' @param data CD dataframe that have the entries of cells of interest as a subset of its rows
+#' @param selectecCells row indices of the cells to add to the figure
+#' @param symbol the symbol that will represent the cell in 3D plot
+#' @param colorScheme the colorScheme to display expression level
+#' @param colorMin the color for minimum expression (do not use if `colorScheme` is specified)
+#' @param colorMax the color for max expression (do not use if `colorScheme` is specified)
+#' @param cellSize size of the cells in plot
+#' @param alpha opacity of the cells in plot, 0 meas totally transparent, 1 means no transparency
 #' @import plotly
 #' @return modified plotly figure
 AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
-                   colorScheme, colorMin, colorMax, cellSize, opacity=1){
+                   colorScheme, colorMin, colorMax, cellSize, alpha=1){
   plotlyFig<-plotlyFig|>plotly::add_trace(
     name=groupName,
     x=data[selectedCells,"x"],
@@ -162,7 +169,7 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
     z=data[selectedCells,"z"], #cells that are not selected will be plotted transparent
     type = "scatter3d", mode="markers",
     marker = list(color=data[selectedCells,"value"], size = cellSize,
-                 opacity = opacity, symbol = symbol,
+                 opacity = alpha, symbol = symbol,
                  colorscale=colorScheme, cmin=colorMin, cmax=colorMax,
                  colorbar = list(title="expression", x = 0)
     )
@@ -201,8 +208,6 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
 #' @export
 #' @import plotly
 #' @import viridis
-#'
-#' @examples drawEmbVal(Embryo, lineages = c("MS", "E", "C"), colors = c(rgb(1,0,0), rgb(1,0,1), rgb(0,0,1)), time = 139)
 drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = NULL,
                         xSize=1, ySize=1, zSize=1, aligned = F,
                         alpha_other = 0.2, cellSize = 7.5,
@@ -256,11 +261,11 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = N
   for (i in seq_along(lineages)) { #add each lineage as a trace
     lineage <- lineages[[i]]
     color <- colors[[i]]
-    opacity <- alphas[[i]]
+    alpha <- alphas[[i]]
     thisCells <- grepCells(CDData = embDat, lineages = lineage, dataReturn = F)
     fig <- fig|>AddGroupLine(groupName = lineage,
                              data = embDat, selectedCells = thisCells,
-                             color=color, opacity = opacity, cellSize=cellSize)
+                             color=color, alpha = alpha, cellSize=cellSize)
     selectCells <- union(selectCells, thisCells)
   }
   otherCells <- embDat|>rownames()|>as.integer()
@@ -280,16 +285,24 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = N
 #' @description
 #' auxiliary function for `drawEmbLine`
 #'
+#' @param plotlyFig the plotly figure object to add extra data point (trace) upon
+#' @param groupName name of the new trace (i.e. cell group)
+#' @param data CD dataframe that have the entries of cells of interest as a subset of its rows
+#' @param selectecCells row indices of the cells to add to the figure
+#' @param color color od this group of cells
+#' @param cellSize size of the cells in plot
+#' @param alpha opacity of the cells in plot, 0 meas totally transparent, 1 means no transparency
+#'
 #' @import plotly
 #' @return modified plotly figure
-AddGroupLine <- function(plotlyFig, groupName, data, selectedCells, color, opacity, cellSize){
+AddGroupLine <- function(plotlyFig, groupName, data, selectedCells, color, alpha, cellSize){
   out <- plotlyFig|>plotly::add_trace(
     name = groupName,
     x=data[selectedCells,"x"],
     y=data[selectedCells,"y"],
     z=data[selectedCells,"z"],
     type = "scatter3d", mode="markers",
-    marker = list(color=color, size = cellSize, opacity = opacity, symbol = 'circle')
+    marker = list(color=color, size = cellSize, opacity = alpha, symbol = 'circle')
   )
  out
 }
@@ -309,6 +322,7 @@ AddGroupLine <- function(plotlyFig, groupName, data, selectedCells, color, opaci
 #' @param keepLabels Boolean, to keep the color bar and legends or not
 #' @export
 #' @import plotly
+#' @import reticulate
 saveEmbImg <- function(
     fig, output_file = "embryo_DV_view.png",
     center = list(0,0,0), viewPoint = list(x=0,y=0,z=1.8), up = list(x = 0, y = 1, z = 0),

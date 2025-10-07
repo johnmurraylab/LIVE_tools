@@ -84,6 +84,3 @@ able to represent expression levels and highlight lineages
 if deliver multiple "lineages" must also deliver a list "lineageColors" with elements corresponding to "lineages"
 drawEmbVal draw the nucleus positions of the embryo in 3D scatter plots, colored by expression
 }
-\examples{
-drawEmbVal(Embryo, lineages = c("MS", "E", "C"), shapes = c("circle","x","square"), time = 139)
-}

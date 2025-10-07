@@ -119,7 +119,7 @@ trimCD <- function(CDDataL, drops){
 #' @param yrange a list in format list(min,max) to define range of y axis
 #' @return a single plotly line plot with each line the (average) blot vs time for each embryo
 #' @export
-#' @import RColorBrewer
+#' @import viridis
 #' @import plotly
 plotBlotLine <- function(CDDataL, title, aligningCell, align_t = "mean",
                          cells=NULL, lineages=NULL, excludeCD = NULL,
@@ -140,8 +140,7 @@ plotBlotLine <- function(CDDataL, title, aligningCell, align_t = "mean",
   fig <- plotly::plot_ly()
   if(!color_palette|>is.character()){#generate a color palette if none is delivered
     unique_colors <- unique(colorGroup)
-    color_palette <- colorRampPalette(
-      RColorBrewer::brewer.pal(9, "RdBu"))(length(unique_colors))|>
+    color_palette <- viridis::viridis(n = length(unique_colors),option = "D") |>
       setNames(unique_colors)
   }
   for(i in seq_along(blotData)){
