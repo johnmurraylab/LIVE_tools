@@ -1,6 +1,6 @@
 Package: LIVEtools
 Title: Lineage Visualization for Embryos
-Version: 0.0.0.9000
+Version: 0.0.0.9100
 Authors@R: 
     person("Yuntian", "Gan", , "brucegansto@gmail.com", role = c("aut", "cre"))
 Description: A C. elegans lineage analysis toolkit works from a simple tabular data format for each embryo, that can be produced easily from StarryNite output, or by parsing Acetree output .zip file into tables. Functionalities include aligning embryo by time and rotation, as well as visualization methods to investigate reporter expression or cell positions

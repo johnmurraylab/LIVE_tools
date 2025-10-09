@@ -46,7 +46,7 @@ plot_trees <- function(inDir, root = "P0",
   embNames <- gsub("(.*)\\.csv$", "\\1", files)
   for (i in seq_along(files)) {
     directory <- paste0(inDir,files[i])
-    CD <- read.csv(file, header=T)
+    CD <- read.csv(directory, header=T)
     tree <- CD_tree_plot(CD, root = root, transform = transform,
                          start_time = start_time, end_time = end_time,
                          exp_col=exp_col, cell_col=cell_col, time_col=time_col,
@@ -259,6 +259,7 @@ CD_tree_plot <- function(CD, root="P0",
       if(is.numeric(min_gain)){blot[blot[,2] < min_gain,2] <- min_gain}
       if(is.numeric(max_gain)){blot[blot[,2] > max_gain,2] <- max_gain
         message("adjusting max gain")}
+      else{max_gain <- max(blot[,2])}
 
       g <- ggtree::ggtree(tree, ladderize=F) %<+% blot
       g <- g + xlim(0, X_Max) + ggtree::geom_tree(aes(color=blot))

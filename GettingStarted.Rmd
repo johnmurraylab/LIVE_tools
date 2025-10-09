@@ -18,7 +18,7 @@ Intended to process data tables where:
 `drawEmb.R` contains functions that plot all nucleus in an embryo in 3D
 
 ## Installation
-efore running the examples below, please ensure the package and its dependencies are installed.
+Before running the examples below, please ensure the package and its dependencies are installed.
 
 ### 1. Install Dependencies
 
@@ -28,7 +28,7 @@ You can install all dependencies automatically using the following commands:
 #### Install CRAN dependencies
 ```{r}
 cran_deps <- c(
-  "data.table", "dplyr", "ggtree", "plotly", "reticulate", "ggplot2", "tidyr", "viridis" 
+  "data.table", "dplyr", "plotly", "reticulate", "ggplot2", "tidyr", "viridis" 
 ) # <-- replace with actual CRAN dependencies from DESCRIPTION
 cran_missing <- setdiff(cran_deps, rownames(installed.packages()))
 if (length(cran_missing)) {
@@ -49,11 +49,12 @@ if (length(bioc_missing)) {
 }
 ```
 ### Install LIVEtools
-Download LIVEtools release package from github:
+Download LIVEtools release package (with file name `LIVEtools_?.?.?.????.tar.gz` where the `?`s are version numbers) from [**Releases**]{https://github.com/johnmurraylab/LIVE_tools/releases} on github repository
 
-Place it in your R working directory, and run the following command
+Then run the following command
 ```{r}
-install.packages("mypackage_1.0.0.tar.gz", repos = NULL, type = "source")
+#replace package name with the actual release file name you downloaded
+install.packages("full/path/to/tar.gz/file", repos = NULL, type = "source")
 ```
 ## Example Workflow
 ### Process a Single Embryo
