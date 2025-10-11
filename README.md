@@ -31,17 +31,57 @@ embryos (e.g. depth correction) `drawEmb.R` contains functions that plot
 all nucleus in an embryo in 3D `tree_plots.R` plots lineage trees 
 with customizable styles
 
-# Modules
-## LineageProcessing
+## Installation
+Please ensure the package and its dependencies are installed **BEFORE** installing LIVE_tools
+
+### 1. Install Dependencies
+
+This package depends on several CRAN and Bioconductor packages.  
+You can install all dependencies automatically using the following commands:
+
+#### Install CRAN dependencies
+```{r}
+cran_deps <- c(
+  "data.table", "dplyr", "plotly", "reticulate", "ggplot2", "tidyr", "viridis" 
+) # <-- replace with actual CRAN dependencies from DESCRIPTION
+cran_missing <- setdiff(cran_deps, rownames(installed.packages()))
+if (length(cran_missing)) {
+  install.packages(cran_missing)
+}
+```
+#### Install Bioconductor dependencies
+```{r}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager") #first, make sure Bioconductor package manager is present
+
+bioc_deps <- c(
+  "ggtree" #Bioconductor packages to install
+)
+bioc_missing <- setdiff(bioc_deps, rownames(installed.packages())) #check missing and install
+if (length(bioc_missing)) {
+  BiocManager::install(bioc_missing)
+}
+```
+### Install LIVEtools
+Download LIVEtools release package (with file name `LIVEtools_?.?.?.????.tar.gz` where the `?`s are version numbers) from [**Releases**]{https://github.com/johnmurraylab/LIVE_tools/releases} on github repository
+
+Then run the following command
+```{r}
+#replace package name with the actual release file name you downloaded
+install.packages("full/path/to/tar.gz/file", repos = NULL, type = "source")
+```
+
+## Modules
+### LineageProcessing
 functions to process one single embryo entity, and slices from embryo entities, which are the dependencies of other codes. Including functions
 
-## CD_Processing
+### CD_Processing
 functions to work with a directory of several embryo data tables. Including fucntions to load data tables, retrieve specific cells and lineages data from multiple embryos, and operations that are only possible with multiple embryos (e.g. depth correction)
 
-## drawEmb
+### drawEmb
 functions that plot all nucleus in an embryo in 3D
 
-### Configuring Python
+#### Configuring Python
 The `saveEmbImg` function uses the [reticulate](https://rstudio.github.io/reticulate/) package
 to interface with a Python instance with "kaleido" and "plotly" installed. 
 
@@ -56,7 +96,7 @@ reticulate::use_condaenv("myenv", required = TRUE)
 Sys.setenv(RETICULATE_PYTHON = "/path/to/python")
 ```
 
-## tree_plots
+### tree_plots
 This package requires a non-CRAN package ggtree that won't be automatically installed
 To install ggtree (offered by bioconductor):
 ```r
