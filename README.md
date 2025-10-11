@@ -63,7 +63,7 @@ if (length(bioc_missing)) {
 }
 ```
 ### Install LIVEtools
-Download LIVEtools release package (with file name `LIVEtools_?.?.?.????.tar.gz` where the `?`s are version numbers) from [**Releases**]{https://github.com/johnmurraylab/LIVE_tools/releases} on github repository
+Download LIVEtools release package (with file name `LIVEtools_?.?.?.????.tar.gz` where the `?`s are version numbers) from <a href="https://github.com/johnmurraylab/LIVE_tools/releases">**Releases**]</a> on github repository
 
 Then run the following command
 ```{r}
