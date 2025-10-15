@@ -63,6 +63,14 @@ if (length(bioc_missing)) {
 }
 ```
 ### Install LIVEtools
+
+Simplest way is to use install_github (assumes you have the devtools library installed)
+```{r}
+devtools::install_github("johnmurraylab/LIVE_tools")
+library(LIVEtools)
+```
+
+### Alternative local download install:
 Download LIVEtools release package (with file name `LIVEtools_?.?.?.????.tar.gz` where the `?`s are version numbers) from <a href="https://github.com/johnmurraylab/LIVE_tools/releases">**Releases**]</a> on github repository
 
 Then run the following command

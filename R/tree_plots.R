@@ -281,15 +281,15 @@ CD_tree_plot <- function(CD, root="P0",
         midpoint <- 10**((newMin+newMax)/2)
       }
       else if(transform == "log"){
-        ewMin <- log(min_gain)
+        newMin <- log(min_gain)
         newMax <- log(max_gain)
         midpoint <- exp((newMin+newMax)/2)
       }
 
       g <- g + ggplot2::scale_color_gradient2(name=exp_legend,
-                                     transform = transform,
+                                     trans = transform,
                                      low=rgb(0,0,0.9),mid=rgb(0.9,0.85,0.8),high="red",
-                                     midpoint = midpoint, lim = c(min_gain,max_gain))
+                                     midpoint = midpoint, limits = c(min_gain,max_gain))
   }else{
       g <- ggtree::ggtree(tree, ladderize=F)+ xlim(0, X_Max)
   }
