@@ -8,18 +8,21 @@
 
 # embryo_lineage_analysis_R
 
-R based programs to analyze and visualize embryo lineage after the cell
-data are extracted from 3D movies in Acetree Intended to process data
-tables where:
+R based package to analyze and visualize embryo lineage after the cell
+data are extracted from 3D movies in StarryNite/Acetree. Allowable input data 
+formats are StarryNite ".zip" files or "CD" .csv files where:
 
 - each table represent one embryo
-- each row represents one cell at a specific time point, with columns:
+- the first row contains column names
+- each row represents one cell at a specific time point, with required columns:
   - `time`: imaging time this cell read is created
   - `cell`: cell name
   - `x`: x position
   - `y`
   - `z`
-  - `blot`: reproter expression
+  - `blot`: reporter expression
+
+Example input files of each format are available in the sample_data folder
 
 `LineageProcessing.R` contains functions to process one single embryo
 entity, and slices from embryo entities, which are the dependencies of
@@ -63,6 +66,14 @@ if (length(bioc_missing)) {
 }
 ```
 ### Install LIVEtools
+
+Simplest way is to use install_github (requires the devtools library)
+```{r}
+devtools::install_github("johnmurraylab/LIVE_tools")
+library(LIVEtools)
+```
+
+### Alternative local download install:
 Download LIVEtools release package (with file name `LIVEtools_?.?.?.????.tar.gz` where the `?`s are version numbers) from <a href="https://github.com/johnmurraylab/LIVE_tools/releases">**Releases**]</a> on github repository
 
 Then run the following command
@@ -73,17 +84,17 @@ install.packages("full/path/to/tar.gz/file", repos = NULL, type = "source")
 
 ## Modules
 ### LineageProcessing
-functions to process one single embryo entity, and slices from embryo entities, which are the dependencies of other codes. Including functions
+functions to process one single embryo entity, and slices from embryo entities, which are the dependencies of other codes. 
 
 ### CD_Processing
-functions to work with a directory of several embryo data tables. Including fucntions to load data tables, retrieve specific cells and lineages data from multiple embryos, and operations that are only possible with multiple embryos (e.g. depth correction)
+functions to work with a directory of several embryo data tables. Including functions to load data tables, retrieve specific cells and lineages data from multiple embryos, and operations that are only possible with multiple embryos (e.g. depth correction)
 
 ### drawEmb
 functions that plot all nucleus in an embryo in 3D
 
 #### Configuring Python
 The `saveEmbImg` function uses the [reticulate](https://rstudio.github.io/reticulate/) package
-to interface with a Python instance with "kaleido" and "plotly" installed. 
+to interface with a Python instance with "kaleido" and "plotly" installed, with compatible versions. 
 
 Before loading the package, you should tell reticulate which Python to use. 
 For example:
