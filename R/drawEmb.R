@@ -320,22 +320,67 @@ AddGroupLine <- function(plotlyFig, groupName, data, selectedCells, color, alpha
 #' @param width in pixels, width of output image
 #' @param height in pixels, height of output image
 #' @param keepLabels Boolean, to keep the color bar and legends or not
+#' @param zoom zoom factor for rendering
+#' @param pad_frac how much to pad the axis ranges to avoid edge clash
+#' @param projection either "orthographic" or "perspective"
 #' @export
 #' @import plotly
 #' @import reticulate
+
 saveEmbImg <- function(
-    fig, output_file = "embryo_DV_view.png",
-    center = list(0,0,0), viewPoint = list(x=0,y=0,z=1.8), up = list(x = 0, y = 1, z = 0),
-    width = 600, height = 450, keepLabels = F
-    ){
-  fig <- fig|>
+  fig, output_file = "embryo_DV_view.png",
+  center = list(0,0,0),
+  viewPoint = list(x = 0, y = 0, z = 1.8),
+  up = list(x = 0, y = 1, z = 0),
+  width = 600, height = 450, keepLabels = FALSE,
+  zoom = 1.3,          # >1 moves camera farther away
+  pad_frac = 0.07,     # add 7% padding to each axis range
+  projection = c("perspective","orthographic")  # choose "orthographic" if desired
+){
+  projection <- match.arg(projection)
+
+  # compute data ranges to pad (works for typical scatter3d/surface traces)
+  pb <- plotly::plotly_build(fig)
+  get_vals <- function(tr, key) unlist(tr[[key]], use.names = FALSE)
+  xs <- unlist(lapply(pb$x$data, get_vals, "x"), use.names = FALSE)
+  ys <- unlist(lapply(pb$x$data, get_vals, "y"), use.names = FALSE)
+  zs <- unlist(lapply(pb$x$data, get_vals, "z"), use.names = FALSE)
+
+  xr <- if (length(xs)) range(xs, na.rm = TRUE) else c(-1, 1)
+  yr <- if (length(ys)) range(ys, na.rm = TRUE) else c(-1, 1)
+  zr <- if (length(zs)) range(zs, na.rm = TRUE) else c(-1, 1)
+
+  # pad ranges
+  pad <- function(r, f) {
+    d <- diff(r)
+    if (!is.finite(d) || d == 0) d <- 1
+    c(r[1] - f*d, r[2] + f*d)
+  }
+  xr <- pad(xr, pad_frac); yr <- pad(yr, pad_frac); zr <- pad(zr, pad_frac)
+
+  # scale the camera eye to "zoom out"
+  eye <- list(
+    x = viewPoint$x * zoom,
+    y = viewPoint$y * zoom,
+    z = viewPoint$z * zoom
+  )
+
+  fig <- fig |>
     plotly::layout(
-      margin = list(l = 0, r = 0, t = 0, b = 0),
+      # small margins to avoid edge clipping
+      margin = list(l = 20, r = 20, t = 10, b = 10),
       scene = list(
         domain = list(x = c(0, 1), y = c(0, 1)),
-        camera = list(eye = viewPoint, center=center, up = up)
+        camera = list(eye = eye, center = center, up = up),
+        projection = list(type = projection),
+        aspectmode = "data",
+        xaxis = list(autorange = FALSE, range = xr),
+        yaxis = list(autorange = FALSE, range = yr),
+        zaxis = list(autorange = FALSE, range = zr)
       )
     )
-  if(!keepLabels){fig<-fig|> plotly::hide_colorbar() |> plotly::hide_legend()}
+
+  if (!keepLabels) fig <- fig |> plotly::hide_colorbar() |> plotly::hide_legend()
+
   plotly::save_image(fig, file = output_file, width = width, height = height, scale = 2)
 }
