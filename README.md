@@ -39,8 +39,8 @@ Please ensure the package and its dependencies are installed **BEFORE** installi
 This package depends on several CRAN and Bioconductor packages.  
 You can install all dependencies automatically using the following commands:
 
-#### Install CRAN dependencies
-```{r}
+#### Install CRAN Dependencies
+```r
 cran_deps <- c(
   "data.table", "dplyr", "plotly", "reticulate", "ggplot2", "tidyr", "viridis" 
 ) # <-- replace with actual CRAN dependencies from DESCRIPTION
@@ -49,8 +49,9 @@ if (length(cran_missing)) {
   install.packages(cran_missing)
 }
 ```
-#### Install Bioconductor dependencies
-```{r}
+
+#### Install Bioconductor Dependencies
+```r
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager") #first, make sure Bioconductor package manager is present
 
@@ -62,19 +63,32 @@ if (length(bioc_missing)) {
   BiocManager::install(bioc_missing)
 }
 ```
+
+#### Setup Python Dependencies
+The `saveEmbImg` function depends on `plotly::save_image`, which further utilizes reticulate to call Python kaleido module and convert plotly plots (html widgets) to static images. 
+The best practice is to setup a python environment specifically for this functionality because R plotly can only utilize a legacy version of kaleido (v0.1.0). 
+
+
+Install python dependencies for the environment
+```sh
+# assume that we have an active python venv environment (you can also use conda for this purpose)
+pip install numpy plotly kaleido==0.1.0 # install dependencies
+```
+The, you shall inform reticualte which python installation to use (see section [Configuring Python](#configuring-python), otherwise reticualte might install a cache python that do not have the proper modules.
+
 ### Install LIVEtools
 
 Simplest way is to use install_github (assumes you have the devtools library installed)
-```{r}
+```r
 devtools::install_github("johnmurraylab/LIVE_tools")
 library(LIVEtools)
 ```
 
 ### Alternative local download install:
-Download LIVEtools release package (with file name `LIVEtools_?.?.?.????.tar.gz` where the `?`s are version numbers) from <a href="https://github.com/johnmurraylab/LIVE_tools/releases">**Releases**]</a> on github repository
+Download LIVEtools release package (with file name `LIVEtools_?.?.?.????.tar.gz` where the `?`s are version numbers) from <a href="https://github.com/johnmurraylab/LIVE_tools/releases">**Releases**</a> on github repository
 
 Then run the following command
-```{r}
+```r
 #replace package name with the actual release file name you downloaded
 install.packages("full/path/to/tar.gz/file", repos = NULL, type = "source")
 ```
@@ -94,22 +108,30 @@ The `saveEmbImg` function uses the [reticulate](https://rstudio.github.io/reticu
 to interface with a Python instance with "kaleido" and "plotly" installed. 
 
 Before loading the package, you should tell reticulate which Python to use. 
-For example:
 
+You can either set a permanent reticulate python installation in .Rprofile: 
+```r
+Sys.setenv(RETICULATE_PYTHON = "/path/to/python")
+```
+Or *EACH TIME BEFORE* you load LIVEtools and use saveEmbImg, you have to configure reticulate (in cause you might work with different python installations through reticualte):
+
+1. load reticulate 
+```r
+library("reticulate")
+```
+2. specify the python environment
 ```r
 # Use a conda environment
-reticulate::use_condaenv("myenv", required = TRUE)
-
-# Or set RETICULATE_PYTHON in your .Rprofile
-Sys.setenv(RETICULATE_PYTHON = "/path/to/python")
+reticulate::use_condaenv("my_env", required = TRUE)
+# Or use a python vnev
+reticulate::use_virtualenv("my_venv")
+```
+3. Activate environment and load LIVEtools module in R
+```r
+reticulate::py_run_string("import sys") # have to so this to ensure consistent behavior
+library(LIVEtools) # only load LIVEtools after everything above is executed
 ```
 
 ### tree_plots
-This package requires a non-CRAN package ggtree that won't be automatically installed
-To install ggtree (offered by bioconductor):
-```r
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install("ggtree")
-
-```
+This package requires a non-CRAN package [ggtree](https://doi.org/doi:10.18129/B9.bioc.ggtree) that won't be automatically installed
+To install ggtree (offered by bioconductor), see section [Install Bioconductor Dependencies](#install-bioconductor-dependencies).
