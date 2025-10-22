@@ -4,18 +4,18 @@
 R based programs to analyze and visualize embryo lineage after the cell data are extracted from 3D movies in Acetree
 Intended to process data tables where: 
 
-* each table represent one embryo
+* each table represents one embryo
 * each row represents one cell at a specific time point, with columns: 
   + `time`: imaging time this cell read is created
   + `cell`: cell name
   + `x`: x position
   + `y`
   + `z`
-  + `blot`: reproter expression
+  + `blot`: reporter expression
 
-`LineageProcessing.R` contains functions to process one single embryo entity, and slices from embryo entities, which are the dependencies of other codes. INcluding functions 
-`CD_Processing.R` are functions to work with a directory of several embryo data tables. Including functions to load data tables, retrieve specific cells and lineages data from multiple embryos, and operations that are only possible with multiple embryos (e.g. depth correction)
-`drawEmb.R` contains functions that plot all nucleus in an embryo in 3D
+`LineageProcessing.R` contains functions to process one single embryo entity, and slices from embryo entities, which are the dependencies of other codes 
+`CD_Processing.R` contains functions to work with a directory of several embryo data tables. Including functions to load data tables, retrieve specific cells and lineages data from multiple embryos, and operations that are only possible with multiple embryos (e.g. depth correction)
+`drawEmb.R` contains functions that plot all nuclei in an embryo in 3D
 
 ## Installation
 Before running the examples below, please ensure the package and its dependencies are installed.
@@ -56,10 +56,19 @@ Then run the following command
 #replace package name with the actual release file name you downloaded
 install.packages("full/path/to/tar.gz/file", repos = NULL, type = "source")
 ```
+
+##or use this:
+```{r}
+devtools::install_github("johnmurraylab/LIVE_tools")
+library(LIVEtools)
+```
+
 ## Example Workflow
 ### Process a Single Embryo
+
 ```{r}
-#load a embryo file
+#load a embryo file (from starrynight format zip file)
+#genotype of JIM767 is tbx-35(tm1789) II; pha-4::GFP; irEx274[ZK177 + unc-119::CFP + rol-6(su1006)]; stIs10226[his-72p::HIS-24::mCherry::let-858 3' UTR + unc-119] OR stIs10116 [his-72(promoter)::his-24::mCherry::let-858 3'UTR + unc-119(+)]; ltIs37[pie-1p::mCherry::his-58 + unc-119] IV; 
 embryo <- readEmbryoTable(file = "sample_data/20241108_JIM767_25_L5-edit.zip")[[1]]
 ```
 #### Plot the embryo nucleus positions in 3D. 
@@ -67,7 +76,7 @@ Plot the lineages
 ```{r}
 time = 139
 figO <- drawEmbLine(
-  embryo, 139, 
+  embryo, time, cellSize=30, 
   xSize=0.08651, ySize=0.08651, zSize=0.5 #unprocessed data can have different x,y,z scales, specify here
   )
 figO[[1]]
@@ -75,22 +84,25 @@ figO[[1]]
 #### Optional: Align embryo position/rotation and then plot
 ```{r}
 rotatedEmbryo <- totalRePosition(
-  embryo, time = 200, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
+  embryo, time = time, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
   xSize=0.08651, ySize=0.08651, zSize=0.5) #the xyz dimension is corrected during rotation
+
+
 figRotated <- drawEmbLine(
-  rotatedEmbryo, 200, xSize = 1, ySize = 1, zSize = 1
+  rotatedEmbryo, time, xSize = 1, ySize = 1, zSize = 1, cellSize=30
   )
 figRotated[[1]]
 ```
-#### Plot 3D with marker gene expression
+#### Plot 3D with marker gene expression - example is pha-4 expression in a tbx-35 mutant embryo
 ```{r}
-figExp <- drawEmbVal(rotatedEmbryo, time = 139)
+figExp <- drawEmbVal(rotatedEmbryo, time = time)
 figExp[[1]]
 ```
-#### Lineage Tree colored by Expression
+#### Lineage Tree colored by Expression --
+
 ```{r}
 treeplot <- CD_tree_plot(
-  rotatedEmbryo, min_gain=-1000, max_gain=16000, transform = "identity", root = "MSaa")
+  rotatedEmbryo, min_gain=-1000, max_gain=16000, transform = "identity", root = "MS", end_time=time)
 treeplot
 ```
 
@@ -123,12 +135,55 @@ fig_blot_cells <- embryos|>plotBlotLine(title = 'specific cells example', color_
                             xrange = xrange, yrange = yrange)
 fig_blot_cells
 ```
+
+
+
+
+#### several lineages in each embryo
 ```{r}
-# several lineages in each embryo
 lineExp <- c("ABalp", "ABara", "ABplpappp", "ABprpappp")
 fig_blot_lines <- embryos|>plotBlotLine(title = 'lineages example', 
                             aligningCell = lineExp[1], align_t = 0, lineages = lineExp, 
                             color_palette = emb_palette,
                             xrange = xrange, yrange = yrange)
 fig_blot_lines
+```
+
+
+####Syntax examples for extracting a single CD from such a list to allow applying 3D functions or tree drawing
+```{r}
+library(reticulate)
+
+exEmbryo <- embryos[["CD"]][[1]]
+exEmbryo <- totalRePosition(
+  exEmbryo, time = time, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
+  xSize=0.08651, ySize=0.08651, zSize=0.5) #the xyz dimension is corrected during rotation
+fig_3D_list <- drawEmbLine(
+  exEmbryo, time 
+##  xSize=0.08651, ySize=0.08651, zSize=0.5 #unprocessed data can have different x,y,z scales, specify here
+  )
+fig_3D_list[[1]]
+```
+
+####save one frame as a png, keeping color scale legend
+```{r}
+saveEmbImg(fig_3D_list[[1]], output_file="example_3D.png",keepLabels=TRUE)
+```
+
+
+##save a collection of frames that could be combined make a movie (in FIJI or other image analysis software)
+```{r}
+outdir <- "out/"
+dir.create("out", recursive = TRUE, showWarnings = FALSE)
+
+for(time in 1:150){
+    if(time %% 10 == 0){
+        message(time)
+    }
+    fig_3D_list <- drawEmbLine(
+        exEmbryo, time, cellSize=15,
+        xSize=1, ySize=1, zSize=1 #unprocessed data can have different x,y,z scales, specify here
+    )
+    saveEmbImg(fig_3D_list[[1]], output_file=paste0(outdir, "example_3D", time,".png"),keepLabels=TRUE, width = 800, height = 650, zoom=1.3)
+}
 ```

@@ -150,8 +150,10 @@ grepCells <- function(CDData, cells=NULL, lineages=NULL,
 #' @description
 #'  orientate one embryo at a given time point so that
 #'  the embryo is centered at (0,0,0)
-#'  coordinate the AB axis is aligned to the x-axis,
-#'  DV to z-axis and RL to y-axis
+#'  coordinate the AP axis is aligned to the x-axis,
+#'  DV to z-axis and LR to y-axis.
+#'  Note that other time points are not adjusted - use totalRePosition to align all time points
+#'
 #'
 #' @param CDFrame a CD-like dataFrame
 #' @param time the time to align
@@ -189,7 +191,11 @@ RePosition <- function(CDFrame, time, indicatorP = "C", indicatorD = "Cxa",
   return(CDFrame)
 }
 
-#' totalRePosition center the embryo at 0,0,0 coordinate and rotate the embryo across all time points
+#' totalRePosition
+#' @description
+#'  center the embryo at 0,0,0 coordinate and rotate the embryo across all time points
+#'  this uses the same strategy as RePosition and defines the orientation based on the specified
+#'  time point, then applies the same rotation to all time points
 #'
 #' @param CDFrame a CD-like dataFrame
 #' @param time the time to generate rotation parameters, nucleus across all time points will be rotated with the same parameter
