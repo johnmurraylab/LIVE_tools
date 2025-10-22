@@ -67,7 +67,7 @@ if (length(bioc_missing)) {
 ```
 ### Install LIVEtools
 
-Simplest way is to use install_github (requires the devtools library)
+Simplest way is to use install_github (assumes you have the devtools library installed)
 ```{r}
 devtools::install_github("johnmurraylab/LIVE_tools")
 library(LIVEtools)
