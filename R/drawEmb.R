@@ -219,19 +219,24 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = N
   embDat$z <- embDat$z*zSize
   if(identical(lineages, NULL)){
     lineages <- list("ABa", "ABp","MS", "E", "C", "D", "P4") #default lineages
-    if(identical(alphas, NULL)){alphas <- rep(0.75, 7)}
-    if(identical(colors, NULL)){colors <- viridis::viridis_pal(option = "H")(7)}
   }
-  else{
-    traceCount <- length(lineages)
-    if(length(colors) != traceCount){
-      print("\'colors\' argument not properly specified")
-      colors <- viridis::viridis_pal(option = "H")(traceCount)
-    }
-    if(length(alphas) != traceCount){
-      print("\'alphas\' argument not properly specified")
-      alphas <- rep(1, traceCount)
-    }
+  traceCount <- length(lineages)
+  if(identical(alphas, NULL)){
+    alphas <- rep(0.75, traceCount) #default alpha
+    print("automatically assigning \"alphas\"")
+  }
+  else if(length(alphas) != traceCount){
+    alphas <- rep(0.75, traceCount) #default alpha
+    print("\`alphas\` not properly specified")
+  }
+
+  if(identical(colors, NULL)){
+    colors <- viridis::viridis_pal(option = "H")(traceCount) #default colors
+    print("automatically assigning \"colors\"")
+  }
+  else if(length(colors) != traceCount){
+    colors <- viridis::viridis_pal(option = "H")(traceCount) #default alpha
+    print("\`colors\` not properly specified")
   }
 
   if(aligned){
@@ -270,7 +275,7 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = N
   }
   otherCells <- embDat|>rownames()|>as.integer()
   otherCells <- otherCells[!otherCells%in%selectCells]
-  fig<-fig%>%add_trace(
+  fig<-fig|>add_trace(
     name ="other cells",
     x=embDat[otherCells,"x"],
     y=embDat[otherCells,"y"],
