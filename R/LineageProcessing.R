@@ -69,7 +69,11 @@ timeAvg <- function(datList, attribute){
 #' @param datList list of CD-like dataFrames
 #' @param alignCell the cell used to find common time point to align
 #' @param alignPoint a 0 to 1 ratio number showing what ratio of the alignCell life to align together (1 means the end, 0 means the start)
-#' @param align_t the time of the `alignCell` at `alignPoint` after alignment, if the input is `"mean"` the align time will be the mean value of `alignPoint` across all embryos
+#' @param align_t the time of the `alignCell` at `alignPoint` after alignment
+#' \itemize{
+#'  \item if the input is `"mean"` the align time will be the mean value of `alignPoint` across all embryos
+#'  \item if the input is `"mean"` the align time will be the highest value of `alignPoint` across all embryos
+#' }
 #' @param alignBlot whether and method to align the blot values together default `FALSE` for not align, "mean" for aligning the mean values together (by addition/subtraction)
 #' @return modified list of CD-like dataFrames
 #' @export

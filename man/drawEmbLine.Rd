@@ -2,7 +2,7 @@
 % Please edit documentation in R/drawEmb.R
 \name{drawEmbLine}
 \alias{drawEmbLine}
-\title{drawEmbLine draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage}
+\title{drawEmbLine}
 \usage{
 drawEmbLine(
   embryoCD,
@@ -61,5 +61,5 @@ where to put the imaginative camera initially, default list(x=0,y=0,z=1.8)}
 a list made of: the plotly figure, a dataframe of the highlighted cells, and a dataframe of cells not highlighted
 }
 \description{
-drawEmbLine draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage
+draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage
 }

@@ -76,12 +76,12 @@ Plot the lineages
 ```{r}
 time = 139
 figO <- drawEmbLine(
-  embryo, time, cellSize=30, 
+  embryo, time, cellSize=10, 
   xSize=0.08651, ySize=0.08651, zSize=0.5 #unprocessed data can have different x,y,z scales, specify here
   )
 figO[[1]]
 ```
-#### Optional: Align embryo position/rotation and then plot
+#### Align embryo position/rotation and then plot
 ```{r}
 rotatedEmbryo <- totalRePosition(
   embryo, time = time, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
@@ -89,16 +89,43 @@ rotatedEmbryo <- totalRePosition(
 
 
 figRotated <- drawEmbLine(
-  rotatedEmbryo, time, xSize = 1, ySize = 1, zSize = 1, cellSize=30
+  rotatedEmbryo, time, xSize = 1, ySize = 1, zSize = 1, cellSize=10
   )
 figRotated[[1]]
 ```
-#### Plot 3D with marker gene expression - example is pha-4 expression in a tbx-35 mutant embryo
+#### Highlight a Selective Set of Sells with Customized Colors and Display Options
+`drawEmbLine` function allows user to select a list of lineages to highlight, then assign color and alpha (transparency) for each selected lineage. Nucleus not selected will be grey and transparent. The colors and alphas should be delivered as lists where each element correspond to one lineage in "lineges" list. If no colors are indicated, or the length of colors list doesn't match that of lineages list, the function will automatically assign unique colors from Viridis palette.
 ```{r}
-figExp <- drawEmbVal(rotatedEmbryo, time = time)
-figExp[[1]]
+figABp <- drawEmbLine(
+  rotatedEmbryo, 
+  lineages = c("ABp", "C"), colors = c(rgb(0.7,0,0.5),rgb(0.3,1,0)), alphas = c(0.3, 1), cellSize=6, 
+  time, xSize = 1, ySize = 1, zSize = 1
+  )
+figABp[[1]]
 ```
-#### Lineage Tree colored by Expression --
+#### Plot 3D with marker gene expression
+The default color scale is Viridis
+```{r}
+figVal <- drawEmbVal(
+  rotatedEmbryo, time = time,
+  cellSize=10)
+figVal[[1]]
+```
+#### Gene expression with customized color scale
+`drawEmbVal` function offers several options to customize colors through `colorScheme` argument
+
+- One may supply a list of vectors, where each vector is a mapping from a normalized value (0 for minimum, 1 for maximum, 0.5 for halfway in the range) to an R color representation. The mapping for 0 and 1 are mandatory. 
+
+- The `colorScheme` argument can also be a palette name string of the following list: Blackbody, Bluered, Blues, Cividis, Earth, Electric, Greens, Greys, Hot, Jet, Picnic, Portland, Rainbow, RdBu, Reds, Viridis, YlGnBu, YlOrRd.
+
+```{r}
+figVal <- drawEmbVal(
+  rotatedEmbryo, time = time, 
+  colorScheme = list(c(0,rgb(0,0,0)), c(1/3,rgb(0,0,1)), c(2/3,rgb(1,1,1)), c(1,rgb(1,0,0))),
+  cellSize=10)
+figVal[[1]]
+```
+#### Lineage Tree colored by Expression
 
 ```{r}
 treeplot <- CD_tree_plot(
@@ -135,10 +162,6 @@ fig_blot_cells <- embryos|>plotBlotLine(title = 'specific cells example', color_
                             xrange = xrange, yrange = yrange)
 fig_blot_cells
 ```
-
-
-
-
 #### several lineages in each embryo
 ```{r}
 lineExp <- c("ABalp", "ABara", "ABplpappp", "ABprpappp")
@@ -148,8 +171,6 @@ fig_blot_lines <- embryos|>plotBlotLine(title = 'lineages example',
                             xrange = xrange, yrange = yrange)
 fig_blot_lines
 ```
-
-
 ####Syntax examples for extracting a single CD from such a list to allow applying 3D functions or tree drawing
 ```{r}
 library(reticulate)

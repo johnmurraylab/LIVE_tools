@@ -2,11 +2,7 @@
 % Please edit documentation in R/drawEmb.R
 \name{drawEmbVal}
 \alias{drawEmbVal}
-\title{drawEmb
-This file contains several functions relevant to drawing a 3D (interactive) embryo,
-able to represent expression levels and highlight lineages
-if deliver multiple "lineages" must also deliver a list "lineageColors" with elements corresponding to "lineages"
-drawEmbVal draw the nucleus positions of the embryo in 3D scatter plots, colored by expression}
+\title{drawEmbVal}
 \usage{
 drawEmbVal(
   embryoCD,
@@ -42,7 +38,19 @@ drawEmbVal(
 
 \item{ReporterForAll}{color the nucleus points by expression or not (default TRUE)}
 
-\item{colorScheme}{a list of at least 2 vectors made of a number between 0 and 1 to specify expression fraction, and a color value to specify color fro that fraction}
+\item{colorScheme}{A color scale definition. This can be:
+\itemize{
+\item \strong{A list of vectors:} Each sub-vector maps a normalized value
+(0 to 1) to an R color.
+\itemize{
+\item Must include mappings for 0 and 1. Example: \code{list(c(0, "blue"), c(1, "red"))}
+\item Can add intermediate values: \code{list(c(0, "blue"), c(0.5, "white"), c(1, "red"))}
+}
+\item \strong{A palette name string:} One of the
+\href{https://plotly.com/r/reference/scatter3d/}{Plotly scatter3d} compatible strings:
+\emph{Blackbody, Bluered, Blues, Cividis, Earth, Electric, Greens, Greys,
+Hot, Jet, Picnic, Portland, Rainbow, RdBu, Reds, Viridis, YlGnBu, YlOrRd.}
+}}
 
 \item{alpha_selected}{alpha value (opacity) for the selected lineages}
 
@@ -78,9 +86,5 @@ where to put the imaginative camera initially, default list(x=0,y=0,z=1.8)}
 a list made of: the plotly figure, a dataframe of the highlighted cells, and a dataframe of cells not highlighted
 }
 \description{
-drawEmb
-This file contains several functions relevant to drawing a 3D (interactive) embryo,
-able to represent expression levels and highlight lineages
-if deliver multiple "lineages" must also deliver a list "lineageColors" with elements corresponding to "lineages"
-drawEmbVal draw the nucleus positions of the embryo in 3D scatter plots, colored by expression
+draw the nucleus positions of the embryo in 3D scatter plots, colored by expression
 }

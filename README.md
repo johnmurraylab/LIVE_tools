@@ -34,15 +34,18 @@ embryos (e.g. depth correction) `drawEmb.R` contains functions that plot
 all nucleus in an embryo in 3D `tree_plots.R` plots lineage trees 
 with customizable styles
 
-## Installation
+# Installation
 Please ensure the package and its dependencies are installed **BEFORE** installing LIVE_tools
 
-### 1. Install Dependencies
+## 1. Install Dependencies
+
+### Before you begin: 
+Open R or RStudio before following these installation steps. All commands below (except for the optional python environment setup) should be run in the R console.
 
 This package depends on several CRAN and Bioconductor packages.  
 You can install all dependencies automatically using the following commands:
 
-#### Install CRAN Dependencies
+### Install CRAN Dependencies
 ```r
 cran_deps <- c(
   "data.table", "dplyr", "plotly", "reticulate", "ggplot2", "tidyr", "viridis" 
@@ -53,7 +56,7 @@ if (length(cran_missing)) {
 }
 ```
 
-#### Install Bioconductor Dependencies
+### Install Bioconductor Dependencies
 ```r
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager") #first, make sure Bioconductor package manager is present
@@ -67,17 +70,19 @@ if (length(bioc_missing)) {
 }
 ```
 
-#### Setup Python Dependencies
+### Setup Python Dependencies
 The `saveEmbImg` function depends on `plotly::save_image`, which further utilizes reticulate to call Python kaleido module and convert plotly plots (html widgets) to static images. 
 The best practice is to setup a python environment specifically for this functionality because R plotly can only utilize a legacy version of kaleido (v0.1.0). 
 
+#### Prepare Python Environment
+The simplist way to have a separated python 
 
 Install python dependencies for the environment
 ```sh
-# assume that we have an active python venv environment (you can also use conda for this purpose)
+# assume that we have an active python venv environment (you can also use conda to manage environments and packages)
 pip install numpy plotly kaleido==0.1.0 # install dependencies
 ```
-The, you shall inform reticualte which python installation to use (see section [Configuring Python](#configuring-python), otherwise reticualte might install a cache python that do not have the proper modules.
+Then, you shall inform reticualte which python installation to use (see section [Configuring Python](#configuring-python), otherwise reticualte might install a cache python that do not have the proper modules.
 
 ### Install LIVEtools
 
@@ -131,7 +136,7 @@ reticulate::use_virtualenv("my_venv")
 ```
 3. Activate environment and load LIVEtools module in R
 ```r
-reticulate::py_run_string("import sys") # have to so this to ensure consistent behavior
+reticulate::py_run_string("import sys") # do this to activate python kernal ensure consistent behavior
 library(LIVEtools) # only load LIVEtools after everything above is executed
 ```
 

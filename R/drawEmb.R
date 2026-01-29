@@ -1,10 +1,12 @@
-#' drawEmb
-#' This file contains several functions relevant to drawing a 3D (interactive) embryo,
-#' able to represent expression levels and highlight lineages
-#' if deliver multiple "lineages" must also deliver a list "lineageColors" with elements corresponding to "lineages"
+# drawEmb
+# This file contains several functions relevant to drawing a 3D (interactive) embryo,
+# able to represent expression levels and highlight lineages
+# if deliver multiple "lineages" must also deliver a list "lineageColors" with elements corresponding to "lineages"
 
 
-#' drawEmbVal draw the nucleus positions of the embryo in 3D scatter plots, colored by expression
+#' drawEmbVal
+#' @description
+#' draw the nucleus positions of the embryo in 3D scatter plots, colored by expression
 #'
 #' @param embryoCD the embryo dataframe with cell, time, and blot(expression) column, mandatory
 #' @param time which time to plot the embryo, mandatory
@@ -12,7 +14,19 @@
 #' @param lineages a list of lineages to highlight (plot with the given symbol in "shapes" parameter)
 #' @param shapes a list of shapes to plot each lineage given in "lineages"
 #' @param ReporterForAll color the nucleus points by expression or not (default TRUE)
-#' @param colorScheme a list of at least 2 vectors made of a number between 0 and 1 to specify expression fraction, and a color value to specify color fro that fraction
+#' @param colorScheme A color scale definition. This can be:
+#' \itemize{
+#'   \item \strong{A list of vectors:} Each sub-vector maps a normalized value
+#'   (0 to 1) to an R color.
+#'   \itemize{
+#'     \item Must include mappings for 0 and 1. Example: \code{list(c(0, "blue"), c(1, "red"))}
+#'     \item Can add intermediate values: \code{list(c(0, "blue"), c(0.5, "white"), c(1, "red"))}
+#'   }
+#'   \item \strong{A palette name string:} One of the
+#'   \href{https://plotly.com/r/reference/scatter3d/}{Plotly scatter3d} compatible strings:
+#'   \emph{Blackbody, Bluered, Blues, Cividis, Earth, Electric, Greens, Greys,
+#'   Hot, Jet, Picnic, Portland, Rainbow, RdBu, Reds, Viridis, YlGnBu, YlOrRd.}
+#' }
 #' @param alpha_selected alpha value (opacity) for the selected lineages
 #' @param alpha_other alpha value (opacity) for other lineages
 #' @param maxBlot upper limit for expression coloring
@@ -56,17 +70,20 @@ drawEmbVal<-function(embryoCD, time, valCol = "blot",
   embDat<- left_join(embDat, cell_value, by = "cell")
   if(is.null(maxBlot)){maxBlot <- max(embDat$value)}
   if(is.null(minBlot)){minBlot <- min(embDat$value)}
-  if(identical(lineages, NULL)){
-    lineages <- c("P0")
-    if(length(shapes) != length(lineages)){
-      shapes <- c("circle")
-    }
+  if(identical(lineages, NULL) | identical(lineages, NA)){#default P0 lineage
+    lineages <- "P0"
+    if(length(shapes) != 1){shapes <- c("circle")}
     if(is.null(alpha_selected)){alpha_selected = 0.75}
-    if(is.null(alpha_other)){alpha_other = 0.4}
-  } #default lineages
+  }
+  else if(!(is.character(lineages) | is.vector(lineages))){
+    print("'lineages' parameter of wrong type, using P0")
+    lineages <- "P0"
+    if(length(shapes) != 1){shapes <- c("circle")}
+    if(is.null(alpha_selected)){alpha_selected = 0.75}
+  }
   else{
     if(length(shapes) != length(lineages)){
-      print("\'shapes\' parameters not properly specified, using circles for all")
+      print("'shapes' parameters not properly specified, using circles for all")
       # shapesSet <- schema(F)$traces$scatter$attributes$marker$symbol$values
       # shapesSet <- grep("[a-z]", shapesSet, value = TRUE)
       # shapesSet <- shapesSet[-grep("dot", shapesSet)]
@@ -76,12 +93,9 @@ drawEmbVal<-function(embryoCD, time, valCol = "blot",
       shapes <- rep("circle", times = length(lineages))
     }
     if(is.null(alpha_selected)){alpha_selected = 1}
-    if(is.null(alpha_other)){alpha_other = 0.4}
   }
-  if(is.null(colorScheme)){colorScheme =  "Viridis"}
-  else if(colorScheme=="blackBlueOrange"){
-    colorScheme<-list(c(0,rgb(0,0,0)), c(0.3,rgb(0,0.2,1)), c(0.7,rgb(1,0,0.2)), c(1,rgb(1,0.7,0.3)))}
-  else if(colorScheme=="blackOrange"){colorScheme<-list(c(0,rgb(0,0,0)), c(0.6,rgb(1,0.1,0.1)), c(1,rgb(1,0.7,0.3)))}
+  if(is.null(alpha_other)){alpha_other = 0.4} #other cells transparent by default
+  if(identical(colorScheme, NULL)){colorScheme =  "Viridis"} #default colorscale
 
   # rangeDim <- function(dimVals){
   #   span <- max(dimVals)-min(dimVals)
@@ -177,7 +191,8 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
   return(plotlyFig)
 }
 
-#' drawEmbLine draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage
+#' drawEmbLine
+#' @description draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage
 #'
 #' @param embryoCD the embryo dataframe with cell, time column, mandatory
 #' @param time numeric, mandatory, which time to plot the embryo, automatically choose the closest time point if no exact match
@@ -217,8 +232,12 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = N
   embDat$x <- embDat$x*xSize
   embDat$y <- embDat$y*ySize
   embDat$z <- embDat$z*zSize
-  if(identical(lineages, NULL)){
-    lineages <- list("ABa", "ABp","MS", "E", "C", "D", "P4") #default lineages
+  if(identical(lineages, NULL) | identical(lineages, NA)){
+    lineages <- c("ABa", "ABp","MS", "E", "C", "D", "P4") #default lineages
+  }
+  else if(!(is.character(lineages) | is.vector(lineages))){
+    print("'lineages' parameter of wrong type, using default")
+    lineages <- c("ABa", "ABp","MS", "E", "C", "D", "P4")
   }
   traceCount <- length(lineages)
   if(identical(alphas, NULL)){
@@ -227,16 +246,16 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = N
   }
   else if(length(alphas) != traceCount){
     alphas <- rep(0.75, traceCount) #default alpha
-    print("\`alphas\` not properly specified")
+    print("`alphas`` not properly specified")
   }
 
   if(identical(colors, NULL)){
     colors <- viridis::viridis_pal(option = "H")(traceCount) #default colors
-    print("automatically assigning \"colors\"")
+    print("automatically assigning `colors`")
   }
   else if(length(colors) != traceCount){
-    colors <- viridis::viridis_pal(option = "H")(traceCount) #default alpha
-    print("\`colors\` not properly specified")
+    print("`colors` not properly specified, automatically assigning `colors`")
+    colors <- viridis::viridis_pal(option = "H")(traceCount)
   }
 
   if(aligned){

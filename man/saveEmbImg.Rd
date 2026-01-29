@@ -15,7 +15,10 @@ saveEmbImg(
   up = list(x = 0, y = 1, z = 0),
   width = 600,
   height = 450,
-  keepLabels = F
+  keepLabels = FALSE,
+  zoom = 1.3,
+  pad_frac = 0.07,
+  projection = c("perspective", "orthographic")
 )
 }
 \arguments{
@@ -34,6 +37,12 @@ saveEmbImg(
 \item{height}{in pixels, height of output image}
 
 \item{keepLabels}{Boolean, to keep the color bar and legends or not}
+
+\item{zoom}{zoom factor for rendering}
+
+\item{pad_frac}{how much to pad the axis ranges to avoid edge clash}
+
+\item{projection}{either "orthographic" or "perspective"}
 }
 \description{
 printEmbImg Generates a .png image from drawEmbExp or drawEmbLine output figure
