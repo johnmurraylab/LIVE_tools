@@ -8,6 +8,7 @@ drawEmbVal(
   embryoCD,
   time,
   valCol = "blot",
+  title = NULL,
   lineages = NULL,
   shapes = NULL,
   cellSize = 10,
@@ -31,6 +32,8 @@ drawEmbVal(
 \item{time}{which time to plot the embryo, mandatory}
 
 \item{valCol}{column that will color the nucleus by}
+
+\item{title}{figure title text}
 
 \item{lineages}{a list of lineages to highlight (plot with the given symbol in "shapes" parameter)}
 

@@ -21,3 +21,4 @@ readStarryNiteZip.Rmd
 .Rprofile
 renv/*
 renv*
+*temp*

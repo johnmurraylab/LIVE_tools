@@ -17,89 +17,172 @@ Intended to process data tables where:
 `CD_Processing.R` contains functions to work with a directory of several embryo data tables. Including functions to load data tables, retrieve specific cells and lineages data from multiple embryos, and operations that are only possible with multiple embryos (e.g. depth correction)
 `drawEmb.R` contains functions that plot all nuclei in an embryo in 3D
 
-## Installation
-Before running the examples below, please ensure the package and its dependencies are installed.
-
-### 1. Install Dependencies
-
-This package depends on several CRAN and Bioconductor packages.  
-You can install all dependencies automatically using the following commands:
-
-#### Install CRAN dependencies
+## Before you start
+Before running the examples below, please ensure that you have installed [LIVEtools](https://github.com/johnmurraylab/LIVE_tools#installation) and its dependencies. 
 ```{r}
-cran_deps <- c(
-  "data.table", "dplyr", "plotly", "reticulate", "ggplot2", "tidyr", "viridis" 
-) # <-- replace with actual CRAN dependencies from DESCRIPTION
-cran_missing <- setdiff(cran_deps, rownames(installed.packages()))
-if (length(cran_missing)) {
-  install.packages(cran_missing)
+library("LIVEtools")
+```
+
+## Understanding Data Structures
+
+### Single Embryo Data
+When loading a single embryo file with `readEmbryoTable()`, the function returns a **list** containing:
+1. `[[1]]` - The embryo data.frame (cell tracking table)
+2. `[[2]]` - A boolean indicating if time correction was applied
+
+**Important**: To access the actual embryo data.frame, you must use `[[1]]`:
+```{r}
+# Returns a list
+embryo_list <- readEmbryoTable(file = "sample_data/20241108_JIM767_25_L5-edit.zip")
+
+# Extract the data.frame - THIS IS REQUIRED for downstream functions
+embryo <- embryo_list[[1]]
+
+# Attempting to use embryo_list directly in plotting functions will cause errors
+# because they expect a data.frame, not a list
+```
+
+### Multi-Embryo Data Structure
+When processing multiple embryos with `CD_In()`, the input directory should contain:
+```
+data_directory/
+  ├── CDembryo1.csv       # Cell tracking data table for embryo 1
+  ├── CDembryo2.csv       # Cell tracking data table for embryo 2
+  ├── ...
+  ├── TIMEembryo1.csv     # Actual imaging times for time correction (optional)
+  ├── TIMEembryo2.csv
+  ├── ...
+  ├── embryo1AuxInfo.csv  # Metadata (optional): coordinate scales, rotation status, etc. 
+  ├── embryo2AuxInfo.csv
+  └── ...
+```
+
+`CD_In()` returns a nested list structure:
+```
+embryos                   # Main list object
+  ├── $CD                 # List of cell tracking data.frames
+  |   ├── $embryo1        # data.frame from CDembryo1.csv (time-corrected if TIME file exists)
+  |   ├── $embryo2        # data.frame from CDembryo2.csv
+  |   └── ...
+  └── $info               # List of metadata data.frames
+      ├── $embryo1        # data.frame from embryo1AuxInfo.csv + processing flags
+      ├── $embryo2        # data.frame from embryo2AuxInfo.csv + processing flags
+      └── ...
+```
+
+The `$info` data.frames contain:
+- `name`: Embryo identifier
+- `depth_corrected`: Boolean flag
+- `time_corrected`: Boolean flag  
+- `rotated`: Boolean flag
+- Additional custom metadata from AuxInfo files
+
+### Accessing Individual Embryos
+
+**Method 1: Extract by index (quick but loses identity)**
+```{r}
+# Extract first embryo's data
+exEmbryo <- embryos[["CD"]][[1]]
+
+# WARNING: This loses the embryo name and metadata!
+# You won't know which embryo this is without additional tracking
+```
+
+**Method 2: Extract with metadata (recommended)**
+```{r}
+# Extract both data and metadata together
+exEmbryo <- embryos[["CD"]][[1]] 
+exEmbryo_info <- embryos[["info"]][[1]]
+
+# Now you can access identifying information:
+embryo_name <- exEmbryo_info$name
+embryo_name  # Returns the embryo identifier
+
+# Or extract by name (if you know it):
+exEmbryo <- embryos[["CD"]][["embryo1"]]
+exEmbryo_info <- embryos[["info"]][["embryo1"]]
+```
+
+**Method 3: Extract by name from the start (recommended)**
+```{r}
+# If you know the embryo name, access it directly:
+embryo_name <- "embryo1"
+exEmbryo <- embryos[["CD"]][[embryo_name]]
+exEmbryo_info <- embryos[["info"]][[embryo_name]]
+```
+
+### Working with Multi-Embryo Data
+
+Many functions in this package are designed to work with the entire `embryos` list structure. For example, `plotBlotLine()` automatically processes all embryos and plots them together. However, 3D visualization and tree plotting functions (`drawEmbLine()`, `drawEmbVal()`, `CD_tree_plot()`) require a **single embryo data.frame** as input.
+
+To iterate over all embryos for individual processing:
+```{r}
+# Get list of embryo names
+embryo_names <- names(embryos[["CD"]])
+
+# Process each embryo
+for (emb_name in embryo_names) {
+  this_embryo <- embryos[["CD"]][[emb_name]]
+  this_info <- embryos[["info"]][[emb_name]]
+  # Your processing code here
+  # e.g., create 3D plots, save with embryo-specific file name
 }
 ```
-#### Install Bioconductor dependencies
-```{r}
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager") #first, make sure Bioconductor package manager is present
 
-bioc_deps <- c(
-  "ggtree" #Bioconductor packages to install
-)
-bioc_missing <- setdiff(bioc_deps, rownames(installed.packages())) #check missing and install
-if (length(bioc_missing)) {
-  BiocManager::install(bioc_missing)
-}
-```
-### Install LIVEtools
-Download LIVEtools release package (with file name `LIVEtools_?.?.?.????.tar.gz` where the `?`s are version numbers) from [**Releases**]{https://github.com/johnmurraylab/LIVE_tools/releases} on github repository
-
-Then run the following command
-```{r}
-#replace package name with the actual release file name you downloaded
-install.packages("full/path/to/tar.gz/file", repos = NULL, type = "source")
-```
-
-##or use this:
-```{r}
-devtools::install_github("johnmurraylab/LIVE_tools")
-library(LIVEtools)
-```
+**Note on Advanced Multi-Embryo Operations**: 
+- **Averaged trees**: Not currently implemented, but could be achieved by aggregating data across embryos using `aggEmbryos()` with custom post-processing
+- **Averaged 3D positions**: Possible by aligning embryos to equivalent developmental stages (using `alignTime()`), then averaging x/y/z coordinates across embryos for each cell type at matched timepoints
 
 ## Example Workflow
 ### Process a Single Embryo
-
 ```{r}
-#load a embryo file (from starrynight format zip file)
-#genotype of JIM767 is tbx-35(tm1789) II; pha-4::GFP; irEx274[ZK177 + unc-119::CFP + rol-6(su1006)]; stIs10226[his-72p::HIS-24::mCherry::let-858 3' UTR + unc-119] OR stIs10116 [his-72(promoter)::his-24::mCherry::let-858 3'UTR + unc-119(+)]; ltIs37[pie-1p::mCherry::his-58 + unc-119] IV; 
-embryo <- readEmbryoTable(file = "sample_data/20241108_JIM767_25_L5-edit.zip")[[1]]
+# Load a single embryo file (from StarryNite format zip file)
+# Genotype: JIM767 is tbx-35(tm1789) II; pha-4::GFP; ...
+embryo_list <- readEmbryoTable(file = "sample_data/20241108_JIM767_25_L5-edit.zip")
+
+# IMPORTANT: Extract the data.frame from the returned list using [[1]]
+# The list contains: [[1]] = data.frame, [[2]] = boolean for time correction
+embryo <- embryo_list[[1]]
+
+# Verify we have a data.frame
+class(embryo)  # Should print "data.frame"
 ```
 #### Plot the embryo nucleus positions in 3D. 
 Plot the lineages
 ```{r}
 time = 139
 figO <- drawEmbLine(
-  embryo, time, cellSize=10, 
+  #no lineage argument provided, so the function will group cells into ABa, ABp, MS, E, C, D, P4
+  embryo, time, cellSize=10, title = "Default 7 Lineages", 
   xSize=0.08651, ySize=0.08651, zSize=0.5 #unprocessed data can have different x,y,z scales, specify here
   )
 figO[[1]]
 ```
 #### Align embryo position/rotation and then plot
+`totalRePosition` will trsnslate all embryo cells to center the embryo at (0,0,0), align embryo anterior with x+ direction, left with y+, dorsal with z+.
 ```{r}
 rotatedEmbryo <- totalRePosition(
   embryo, time = time, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
   xSize=0.08651, ySize=0.08651, zSize=0.5) #the xyz dimension is corrected during rotation
-
-
+#so we no longer have to provide xyz dimension size in plotting function (defualt is 1)
 figRotated <- drawEmbLine(
-  rotatedEmbryo, time, xSize = 1, ySize = 1, zSize = 1, cellSize=10
+  rotatedEmbryo, time, title = "Default Lineages Aligned", cellSize=10
   )
 figRotated[[1]]
 ```
-#### Highlight a Selective Set of Sells with Customized Colors and Display Options
-`drawEmbLine` function allows user to select a list of lineages to highlight, then assign color and alpha (transparency) for each selected lineage. Nucleus not selected will be grey and transparent. The colors and alphas should be delivered as lists where each element correspond to one lineage in "lineges" list. If no colors are indicated, or the length of colors list doesn't match that of lineages list, the function will automatically assign unique colors from Viridis palette.
+#### Customize Lineage 3D plot
+`drawEmbLine` function allows user to select an array of lineages to highlight, then assign color and alpha (transparency) for **each selected lineage** as two array with corresponding ordering. 
+
+- Nucleus not selected will be grey and transparent. 
+- The colors and alphas should be delivered as lists where each element correspond to one lineage in "lineges" list. 
+- If no colors are indicated, or the length of colors array doesn't match that of lineages list, the function will automatically assign unique colors from viridis palette.
 ```{r}
 figABp <- drawEmbLine(
   rotatedEmbryo, 
-  lineages = c("ABp", "C"), colors = c(rgb(0.7,0,0.5),rgb(0.3,1,0)), alphas = c(0.3, 1), cellSize=6, 
-  time, xSize = 1, ySize = 1, zSize = 1
+  lineages = c("ABp", "C"), 
+  colors = c(rgb(0.7,0,0.5),rgb(0.3,1,0)), #"ABp" will have rgb(0.7,0,0.5),
+  alphas = c(0.3, 1), 
+  cellSize=6, time = time
   )
 figABp[[1]]
 ```
@@ -107,7 +190,7 @@ figABp[[1]]
 The default color scale is Viridis
 ```{r}
 figVal <- drawEmbVal(
-  rotatedEmbryo, time = time,
+  rotatedEmbryo, time = time, title = "expression in default color scale",
   cellSize=10)
 figVal[[1]]
 ```
@@ -115,21 +198,25 @@ figVal[[1]]
 `drawEmbVal` function offers several options to customize colors through `colorScheme` argument
 
 - One may supply a list of vectors, where each vector is a mapping from a normalized value (0 for minimum, 1 for maximum, 0.5 for halfway in the range) to an R color representation. The mapping for 0 and 1 are mandatory. 
-
 - The `colorScheme` argument can also be a palette name string of the following list: Blackbody, Bluered, Blues, Cividis, Earth, Electric, Greens, Greys, Hot, Jet, Picnic, Portland, Rainbow, RdBu, Reds, Viridis, YlGnBu, YlOrRd.
 
 ```{r}
 figVal <- drawEmbVal(
-  rotatedEmbryo, time = time, 
+  rotatedEmbryo, time = time, title = "expression with black-blue-white-red color scale",
+  # here, define pure balck for minimum value, pure blue for 1/3 between maximum and minimum etc.
   colorScheme = list(c(0,rgb(0,0,0)), c(1/3,rgb(0,0,1)), c(2/3,rgb(1,1,1)), c(1,rgb(1,0,0))),
-  cellSize=10)
+)
 figVal[[1]]
 ```
 #### Lineage Tree colored by Expression
-
+The expression color scaling methods can be delivered as `transform` argument. 
+- the default "identity" makes a linear mapping between expression and color scale
+- "log2", "log10", "log" will bring resolute lower expression values through a log color scale. 
 ```{r}
 treeplot <- CD_tree_plot(
-  rotatedEmbryo, min_gain=-1000, max_gain=16000, transform = "identity", root = "MS", end_time=time)
+  rotatedEmbryo, 
+  min_gain=-1000, max_gain = 8000, transform = "identity", 
+  root = "ABara", end_time=time)
 treeplot
 ```
 
@@ -149,40 +236,57 @@ model <- depthCorrectionParm(embryos, lineage = c("ABara", "ABalp", "E"), alignC
 embryos <- embryos |> 
   dataCorrection(lineage=c("ABara", "ABalp", "P1"), model = model, zMax = 67, exc_zMin = 0.2, exc_zMax = 1)
 ```
-#### Plot the reporter expression against time for a particular lineage or specified cells for all embryos.
+#### Plot the reporter expression against time
+`plotBlotLine` function plot the expression of selected cells, averaged in each embryo at each time point. Each embryo will be represented by a unique curve.
+- Synchronize start point for each embryo: if an `aligningCell` argument is delivered, the function will translate the time points in each embryo to make the last time point of `aligningCell` lifespan equal to `align_t` time. 
 ```{r}
-yrange = list(0,16000)
+yrange = list(0,16000) #default figure x,y range
 xrange = list(-50,150)
-# several specified cells in each embryo
 embNames <- names(embryos[["CD"]]) 
 emb_palette <- viridis::viridis(length(embNames)) |> setNames(embNames)#set up palette to make color consistent for the same embryo across different plots
 cellsExp <- strsplit("ABal, ABalp, ABalpa, ABalpaa, ABalpaaa, ABalpaaaa, ABalpaaaaa", split=", ")[[1]]
-fig_blot_cells <- embryos|>plotBlotLine(title = 'specific cells example', color_palette = emb_palette, 
-                            aligningCell = cellsExp[1], align_t = 0, cells = cellsExp, 
-                            xrange = xrange, yrange = yrange)
+fig_blot_cells <- embryos|>plotBlotLine(
+  title = 'specific cells example', color_palette = emb_palette, 
+  aligningCell = "ABal", align_t = 0,
+  cells = cellsExp, 
+  xrange = xrange, yrange = yrange)
 fig_blot_cells
 ```
-#### several lineages in each embryo
+#### Track Expression with Various Cell and Lineage Representations
+- You can take a cell and all its daughter cells into account by putting it into `lineages` argument
+- Both `cells` and `lineages` accepts "x" within cell name, so "ABpxpappp" would include both "ABplpappp" and "ABprpappp"
+- The function averages all cells selected at each time point, the user can mix `cells` and `lineages` from with different parents. 
 ```{r}
-lineExp <- c("ABalp", "ABara", "ABplpappp", "ABprpappp")
-fig_blot_lines <- embryos|>plotBlotLine(title = 'lineages example', 
-                            aligningCell = lineExp[1], align_t = 0, lineages = lineExp, 
+fig_blot_lines <- embryos|>plotBlotLine(title = 'lineages example',
+                            aligningCell = "ABalp", align_t = 0, 
+                            cells = c("Exxx", "Exxxx"), #every 3rd and 4th generation E cell
+                            lineages = c("ABalp","ABara"), 
                             color_palette = emb_palette,
                             xrange = xrange, yrange = yrange)
 fig_blot_lines
 ```
-####Syntax examples for extracting a single CD from such a list to allow applying 3D functions or tree drawing
+#### Extract a Single Embryo from Multi-Embryo Data for 3D Visualization
+
+When you need to visualize individual embryos from a multi-embryo dataset, extract both the data and metadata to preserve embryo identity:
 ```{r}
 library(reticulate)
+reticulate::use_virtualenv("../LIVEtools_venv/")
+# Extract first embryo with its metadata
+embryo_names <- names(embryos[["CD"]])
+first_emb_name <- embryo_names[1]
 
-exEmbryo <- embryos[["CD"]][[1]]
+exEmbryo <- embryos[["CD"]][[first_emb_name]]
+exEmbryo_info <- embryos[["info"]][[first_emb_name]]
+
+# Now we can identify this embryo
+message(paste("Processing embryo:", exEmbryo_info$name))
+
+# Rotate and visualize
 exEmbryo <- totalRePosition(
   exEmbryo, time = time, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
-  xSize=0.08651, ySize=0.08651, zSize=0.5) #the xyz dimension is corrected during rotation
-fig_3D_list <- drawEmbLine(
-  exEmbryo, time 
-##  xSize=0.08651, ySize=0.08651, zSize=0.5 #unprocessed data can have different x,y,z scales, specify here
-  )
+  xSize=0.08651, ySize=0.08651, zSize=0.5)
+
+fig_3D_list <- drawEmbLine(exEmbryo, time)
 fig_3D_list[[1]]
 ```
 
@@ -190,7 +294,6 @@ fig_3D_list[[1]]
 ```{r}
 saveEmbImg(fig_3D_list[[1]], output_file="example_3D.png",keepLabels=TRUE)
 ```
-
 
 ##save a collection of frames that could be combined make a movie (in FIJI or other image analysis software)
 ```{r}

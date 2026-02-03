@@ -2,10 +2,7 @@
 % Please edit documentation in R/CD_Processing.R
 \name{CD_In}
 \alias{CD_In}
-\title{CD_Processing
-This file contains several utility functions that process data based on from CD phenotying file pipelines
-mainly handle the input of CD files by whole directory
-CD_In:}
+\title{CD_In:}
 \usage{
 CD_In(
   directory,

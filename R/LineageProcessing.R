@@ -38,7 +38,7 @@ readEmbryoTable <- function(file, time.file = NULL){
   timed <- F
   if(!is.null(time.file)){#modify the time attributes
     if(file.exists(time.file)){
-      print(paste0("getting time data from: ", time.file))
+      message("getting time data from: ", time.file)
       timed <- T
     }
     TIME <- read.table(time.file, header = F)[,2:3]
@@ -78,8 +78,17 @@ timeAvg <- function(datList, attribute){
 #' @return modified list of CD-like dataFrames
 #' @export
 alignTime <- function(datList, alignCell, alignPoint = 1, align_t = 0, alignBlot = F){
-  rawTimes <- datList|>lapply(function(df){
-    df[with(df, cell==alignCell),'time']|>quantile(alignPoint)})
+  rawTimes <- datList|>lapply(function(CD){
+    mask = with(CD, cell==alignCell)
+    if(sum(mask)==0){return(NULL)}
+    CD[mask,'time']|>quantile(alignPoint)
+  })
+  for(item in rawTimes){
+    if(is.null(item)){
+      warning("the selected cell doe not exist in an embryo, alignTime abandoned")
+      return(datList)
+    }
+  }
   if(align_t=='mean'){align_t<-mean(unlist(rawTimes))}
   else if(align_t=='max'){align_t<-max(unlist(rawTimes))}
   embryos <- names(datList)
@@ -88,7 +97,7 @@ alignTime <- function(datList, alignCell, alignPoint = 1, align_t = 0, alignBlot
     return(datList[[embName]][,'time']+displace)
   })
   if(alignBlot=="mean"){
-    rawBlots <- datList|>lapply(function(df){df[with(df, expr = cell==alignCell),'blot']|>mean()})
+    rawBlots <- datList|>lapply(function(CD){CD[with(CD, expr = cell==alignCell),'blot']|>mean()})
     blotMean <- mean(unlist(rawBlots))
     blotDiff <- rawBlots|>lapply(function(val){blotMean-val})
     names(blotDiff)<-embryos
