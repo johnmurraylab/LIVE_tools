@@ -162,10 +162,10 @@ grepCells <- function(CDData, cells=NULL, lineages=NULL,
 #' RePosition
 #' @description
 #'  orientate one embryo at a given time point so that
-#'  the embryo is centered at (0,0,0)
-#'  coordinate the AP axis is aligned to the x-axis,
-#'  DV to z-axis and LR to y-axis.
-#'  Note that other time points are not adjusted - use totalRePosition to align all time points
+#'  the embryo is centered at (0,0,0) coordinate
+#'  the AP axis is aligned to the x-axis (P toward x+)
+#'  DV to z-axis (D toward z+) and LR to y-axis (R toward y+)
+#'  Note that other time points are not adjusted - use `totalRePosition` to align all time points
 #'
 #'
 #' @param CDFrame a CD-like dataFrame
@@ -207,7 +207,7 @@ RePosition <- function(CDFrame, time, indicatorP = "C", indicatorD = "Cxa",
 #' totalRePosition
 #' @description
 #'  center the embryo at 0,0,0 coordinate and rotate the embryo across all time points
-#'  this uses the same strategy as RePosition and defines the orientation based on the specified
+#'  this uses the same strategy as `RePosition` and defines the orientation based on the specified
 #'  time point, then applies the same rotation to all time points
 #'
 #' @param CDFrame a CD-like dataFrame
@@ -253,12 +253,13 @@ totalRePosition <- function(CDFrame, time, indicatorP = "C", indicatorD = "Cxa",
 
 
 rotationVec <- function(CDFrame, indicatorP, indicatorD, indicatorV, indicatorL, indicatorR){
-  # 1) find the AB axis for this embryo
+  # 1) find the AB axis for this embryo (point toward P)
   pca1 <- prcomp(CDFrame[,c('x','y','z')]) #prcomp() always returns unit vectors
   APVect <- pca1$rotation[c(1,2,3)] #get the PC1 transformation UNIT vector
-  PCells <- grepCells(CDFrame, lineages = indicatorP) #make sure that positive value for principle component 1 transformation vector is toward the A side
+  #make sure that positive is toward the P side
+  PCells <- grepCells(CDFrame, lineages = indicatorP)
   PCellsVect <- c(mean(PCells$x), mean(PCells$y), mean(PCells$z))
-  if(sum(PCellsVect*APVect)>0){APVect <- -APVect}
+  if(sum(PCellsVect*APVect)<0){APVect <- -APVect}
   # 2) find the unit transformation vector toward D side
   DVVect <- c(0,0,0)
   if(!is.null(indicatorD)){ #directional contribution from each indicator lineage
@@ -281,10 +282,10 @@ rotationVec <- function(CDFrame, indicatorP, indicatorD, indicatorV, indicatorL,
     VDVect_L <- c(mean(LCells$x), mean(LCells$y), mean(LCells$z)) |> cross_product(APVect)
     DVVect <- DVVect + VDVect_L
   }
-  #do not scale before adding together so that lineages further from AP make more contributions
-  DVVect <- DVVect/sqrt(sum(DVVect^2))#scale into a unit vector
+  # normalize only after adding together so lineages further from AP weights more
+  DVVect <- DVVect/sqrt(sum(DVVect^2))
   # 3) use vector cross product to get RL transformation vector (+ side is the right side)
-  RLVect <- cross_product(APVect, DVVect)
+  RLVect <- cross_product(-APVect, DVVect) # right-hand rule
   transformMatrix <- cbind(APVect,RLVect,DVVect)
   return(transformMatrix)
 }

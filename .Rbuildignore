@@ -1,5 +1,12 @@
+\.git$
 ^renv$
 ^renv\.lock$
 ^LinAlign\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^sample_data$
+^sample_data/.*$
+^GettingStarted.Rmd$
+^output$
+temp
+^.*CD.*\.csv$

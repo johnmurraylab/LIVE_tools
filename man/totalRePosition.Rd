@@ -43,6 +43,6 @@ the provided CDFrame rotated
 }
 \description{
 center the embryo at 0,0,0 coordinate and rotate the embryo across all time points
-this uses the same strategy as RePosition and defines the orientation based on the specified
+this uses the same strategy as \code{RePosition} and defines the orientation based on the specified
 time point, then applies the same rotation to all time points
 }

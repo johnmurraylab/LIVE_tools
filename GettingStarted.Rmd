@@ -23,89 +23,311 @@ Before running the examples below, please ensure that you have installed [LIVEto
 library("LIVEtools")
 ```
 
-## Understanding Data Structures
-
-### Single Embryo Data
-When loading a single embryo file with `readEmbryoTable()`, the function returns a **list** containing:
-1. `[[1]]` - The embryo data.frame (cell tracking table)
-2. `[[2]]` - A boolean indicating if time correction was applied
-
-**Important**: To access the actual embryo data.frame, you must use `[[1]]`:
+## Working with Single Embryos
+### Loading a Single Embryo
 ```{r}
-# Returns a list
+# Load a single embryo file (from StarryNite format zip file)
+# Genotype: JIM767 is tbx-35(tm1789) II; pha-4::GFP; ...
 embryo_list <- readEmbryoTable(file = "sample_data/20241108_JIM767_25_L5-edit.zip")
+```
+**IMPORTANT: Extract the data.frame from the returned list using [[1]]**
 
-# Extract the data.frame - THIS IS REQUIRED for downstream functions
+The list contains: `[[1]]` = data.frame, `[[2]]` = boolean for time correction
+```{r}
 embryo <- embryo_list[[1]]
-
-# Attempting to use embryo_list directly in plotting functions will cause errors
-# because they expect a data.frame, not a list
+# Verify we have a data.frame
+if(is.data.frame(embryo)){print(dim(embryo))} #should have many rows
 ```
 
-### Multi-Embryo Data Structure
+### Selecting Cells and Timepoints
+
+The `grepCells()` function is a powerful tool for extracting specific cells from your embryo data. It's used internally by plotting and analysis functions, but you can also use it directly to inspect your data. We will work through its features in this section. 
+
+If you are in RStudio, you can open the extracted data.frame's from the **Environment** menu (the table icon on the right) and view what actual observations are retrieved. 
+
+#### Select Specific Cells or Lineages
+```{r}
+# Get all cells at time=100
+cells_t100 <- grepCells(
+  embryo, 
+  lineages = "ALL", # putting "ALL" into either lineages or cells argument retrieves all cells
+  times = 100) # the default of times is an "ALL" so don't have to modify times if not time-selective
+
+# Get specific cells by exact names
+cells_specific <- grepCells(embryo, 
+                            cells = c("ABalp", "ABara"), 
+                            times = 20)
+
+# Get entire lineage (a cell and all its descendants)
+cells_lineage <- grepCells(embryo, 
+                           lineages = "ABal",  # ABal and all daughters
+                           times = 100)        # at time 100
+
+# Mix specific cells and lineages
+cells_mixed <- grepCells(embryo,
+                         cells = c("MSaaapp", "Epla"), # Just these two cells
+                         lineages = "ABal",            # Plus the entire ABal lineage
+                         times = 100)
+
+# P1, P2, P3, P4 as lineages arguments represents themselves and all their descendants
+cells_P2 <- grepCells(embryo, 
+                      lineages = "P2",
+                      times = 100)
+```
+
+#### Using Wildcards
+
+`"x"` is a single-letter wildcard that works the same as "x" in *C. elegans* cell naming convention:
+```{r}
+# Get all left-right sister pairs in the ABa lineage
+cells_wildcard <- grepCells(embryo,
+                            cells = c("MSaxaa", "Exla"),  # Matches MSaaaa/MSapaa, Eala/Epla
+                            times = 100)
+
+# 4th generation E cells (left/right variants)
+cells_E4 <- grepCells(embryo,
+                      cells = "Eaxx",  # 4th generation E cells that are descendants of Ea
+                      times = 100)
+
+lineages_Msxa <- grepCells(embryo,
+                           lineages = "MSxa", #every descendant of MSaa/MSpa
+                           times = 100)
+```
+
+#### Time Matching Behavior
+
+If no exact time match is found, `grepCells()` finds the nearest time point within a threshold:
+```{r}
+# Request time=100.33 (doesn't exist)
+cells_nearest <- grepCells(embryo, lineages = "ALL", times = 100.33)
+# Will return cells from nearest time (e.g., time=100 or time=101)
+
+# Check what time was actually matched
+cat("matched time:", unique(cells_nearest$time))
+
+# Multiple timepoints
+cells_multi <- grepCells(embryo, lineages = "E", times = c(80, 100, 120))
+```
+
+#### Inspect the Data
+
+View the structure of extracted data:
+```{r}
+# See what columns are available
+names(cells_t100)
+
+# Summary statistics
+summary(cells_t100$blot)  # Expression values
+table(cells_t100$cell)     # Cell counts
+
+# Find specific cells in your selection
+cells_t100[cells_t100$cell == "ABala", ]
+```
+
+**Note:** This flexible selection logic (wildcards, lineages, time matching) is also used by:
+- 3D plotting: `drawEmbLine()`, `drawEmbVal()`
+- Positioning: `RePosition()`, `totalRePosition()`
+- Expression plotting: `plotBlotLine()` (for multi-embryo data)
+
+### Visualizing Single Embryo in 3D
+
+#### Basic 3D Lineage Plot
+Plot nucleus positions in 3D space. Without specifying lineages, the function groups cells into the default 7 lineages: ABa, ABp, MS, E, C, D, P4.
+```{r}
+figO <- drawEmbLine(
+  embryo, time=139, cellSize=10, title = "Default 7 Lineages", 
+  xSize=0.08651, ySize=0.08651, zSize=0.5 # Specify coordinate scales for raw data
+  )
+figO[[1]]
+```
+
+#### Align Embryo Position and Orientation
+`totalRePosition()` centers the embryo at (0,0,0) and aligns it to standard axes:
+- Posterior → x+ direction
+- Right → y+ direction
+- Dorsal → z+ direction
+```{r}
+rotatedEmbryo <- totalRePosition(
+  embryo, time = 139, 
+  indicatorP = "C",      # Posterior marker
+  indicatorD = "Cxa",    # Dorsal marker
+  indicatorV = "MSxxp",  # Ventral marker
+  xSize=0.08651, ySize=0.08651, zSize=0.5) # After rotation, coordinate scales are normalized (xSize=ySize=zSize=1)
+figRotated <- drawEmbLine(
+  rotatedEmbryo, time = 139, title = "Default Lineages Aligned", cellSize=10
+  )
+figRotated[[1]]
+```
+#### Customize Lineage Display
+Highlight specific lineages with custom colors and transparency:
+`drawEmbLine` function allows user to select an array of lineages to highlight, then assign color and alpha (transparency) for **each selected lineage** as two array with corresponding ordering. Uses the same cell/lineage selection logic as `grepCells()` (see "Selecting Cells and Timepoints" section).
+
+- Nucleus not selected will be grey and transparent. 
+- The colors and alphas should be delivered as lists where each element correspond to one lineage in "lineges" list. 
+- If no colors are indicated, or the length of colors array doesn't match that of lineages list, the function will automatically assign unique colors from viridis palette.
+```{r}
+figABp <- drawEmbLine(
+  rotatedEmbryo, 
+  lineages = c("ABxlx", "C"), 
+  colors = c(rgb(0.7,0,0.5),rgb(0.3,1,0)), #"ABp" will have rgb(0.7,0,0.5),
+  alphas = c(0.3, 1), 
+  cellSize=6, time = 139
+  )
+figABp[[1]]
+```
+
+#### Plot Gene Expression in 3D
+Color cells by reporter expression levels:
+```{r}
+# Default Viridis color scale
+figVal <- drawEmbVal(
+  rotatedEmbryo, time = 139, title = "expression in default color scale",
+  cellSize=10)
+figVal[[1]]
+```
+#### Custom Color Scale for Expression
+`drawEmbVal` function offers several options to customize colors through `colorScheme` argument
+```{r}
+figVal <- drawEmbVal(
+  rotatedEmbryo, time = 139, title = "Expression - Custom Colors",
+  colorScheme = list( # Map normalized values (0=min, 1=max) to colors
+    c(0,rgb(0,0,0)),    # Black at minimum
+    c(1/3,rgb(0,0,1)),  # Blue at 1/3
+    c(2/3,rgb(1,1,1)),  # White at 2/3
+    c(1,rgb(1,0,0))     # Red at maximum
+  ),
+)
+figVal[[1]]
+```
+Alternatively, use named color scales: Blackbody, Bluered, Blues, Cividis, Earth, Electric, Greens, Greys, Hot, Jet, Picnic, Portland, Rainbow, RdBu, Reds, Viridis, YlGnBu, YlOrRd.
+
+#### Lineage Tree colored by Expression
+```{r}
+treeplot <- CD_tree_plot(
+  rotatedEmbryo,
+  root = "ABara",         # Starting cell
+  end_time=139,           # Only show lineage up to this time
+  min_gain=-1000,         # Color scale minimum
+  max_gain = 8000,        # Color scale maximum
+  transform = "identity"  # "identity" for linear color scale. "log2", "log10", or "log" for better resolution at low expression
+)
+treeplot
+```
+
+### Saving a Single Embryo
+
+After processing (e.g., rotation, manual corrections), save your modified embryo with R built-in `write.csv`:
+
+#### Save Cell Tracking Data Only
+```{r}
+write.csv(
+  rotatedEmbryo, 
+  file = "output/CDembryo1_rotated.csv", 
+  row.names = FALSE  # Important: prevents adding row numbers as a column
+)
+```
+
+#### Save with Metadata
+If you have metadata to preserve:
+
+```{r}
+# Create or update metadata
+embryo_info <- data.frame(
+  name = "embryo1",
+  rotated = TRUE,
+  depth_corrected = FALSE,
+  time_corrected = FALSE
+)
+
+# Save both files
+write.csv(rotatedEmbryo, "output/CDembryo1_rotated.csv", row.names = FALSE)
+write.csv(embryo_info, "output/embryo1Info.csv", row.names = FALSE)
+```
+
+#### Reload a Saved Embryo
+```{r}
+# Read.csv returns a data.frame directly (no [[1]] needed)
+embryo_reloaded <- read.csv("output/CDembryo1_rotated.csv", header = TRUE)
+embryo_info_reloaded <- read.csv("output/embryo1Info.csv", header = TRUE)
+
+# Verify
+dim(embryo_reloaded)
+head(embryo_reloaded)
+embryo_info_reloaded$rotated  # Check processing status
+```
+**Important considerations:**
+- Always use `row.names = FALSE` when saving to avoid adding an extra index column
+- Use consistent naming conventions (e.g., "CD" prefix for cell data, "AuxInfo" suffix for metadata)
+- The standard `read.csv()` with `header = TRUE` is sufficient for reloading
+- Unlike `readEmbryoTable()`, `read.csv()` returns a data.frame directly (not a list)
+
+
+## Process a Batch of Embryos
+
+### Loading Multiple Embryos
+
+#### Input Directory Structure
 When processing multiple embryos with `CD_In()`, the input directory should contain:
 ```
 data_directory/
   ├── CDembryo1.csv       # Cell tracking data table for embryo 1
   ├── CDembryo2.csv       # Cell tracking data table for embryo 2
   ├── ...
-  ├── TIMEembryo1.csv     # Actual imaging times for time correction (optional)
+  ├── TIMEembryo1.csv     # (Optional) Actual imaging times for time correction
   ├── TIMEembryo2.csv
   ├── ...
-  ├── embryo1AuxInfo.csv  # Metadata (optional): coordinate scales, rotation status, etc. 
+  ├── embryo1AuxInfo.csv  # (Optional) Metadata: coordinate scales, rotation status, etc. 
   ├── embryo2AuxInfo.csv
   └── ...
 ```
 
-`CD_In()` returns a nested list structure:
+#### Read a directory of embryo tables
+```{r} 
+embryos <- CD_In(directory = "sample_data/JIM767_25/", prefix = "CD",
+                 time.prefix = "TIME", time.suffix = ".csv",
+                 info.prefix = "", info.suffix = "AuxInfo.csv")
+```
+
+#### Understanding the Returned Structure
+`CD_In()` returns a nested list:
+
 ```
 embryos                   # Main list object
   ├── $CD                 # List of cell tracking data.frames
-  |   ├── $embryo1        # data.frame from CDembryo1.csv (time-corrected if TIME file exists)
-  |   ├── $embryo2        # data.frame from CDembryo2.csv
-  |   └── ...
+  │   ├── $embryo1        # data.frame from CDembryo1.csv
+  │   ├── $embryo2        # data.frame from CDembryo2.csv
+  │   └── ...
   └── $info               # List of metadata data.frames
-      ├── $embryo1        # data.frame from embryo1AuxInfo.csv + processing flags
-      ├── $embryo2        # data.frame from embryo2AuxInfo.csv + processing flags
+      ├── $embryo1        # data.frame from embryo1Info.csv + auto-generated flags
+      ├── $embryo2        # data.frame from embryo2Info.csv + auto-generated flags
       └── ...
 ```
 
-The `$info` data.frames contain:
+The `$info` data.frames track processing status:
 - `name`: Embryo identifier
-- `depth_corrected`: Boolean flag
-- `time_corrected`: Boolean flag  
-- `rotated`: Boolean flag
-- Additional custom metadata from AuxInfo files
+- `depth_corrected`: TRUE if depth correction was applied
+- `time_corrected`: TRUE if TIME files were used
+- `rotated`: TRUE if rotation was applied
+- Plus any custom fields from your Info files
 
 ### Accessing Individual Embryos
 
-**Method 1: Extract by index (quick but loses identity)**
+**Method 1: By index (quick but loses identity)**
 ```{r}
-# Extract first embryo's data
 exEmbryo <- embryos[["CD"]][[1]]
-
-# WARNING: This loses the embryo name and metadata!
-# You won't know which embryo this is without additional tracking
+# WARNING: You won't know which embryo this is!
 ```
 
-**Method 2: Extract with metadata (recommended)**
+**Method 2: With metadata (recommended)**
 ```{r}
-# Extract both data and metadata together
-exEmbryo <- embryos[["CD"]][[1]] 
+exEmbryo <- embryos[["CD"]][[1]]
 exEmbryo_info <- embryos[["info"]][[1]]
 
-# Now you can access identifying information:
-embryo_name <- exEmbryo_info$name
-embryo_name  # Returns the embryo identifier
-
-# Or extract by name (if you know it):
-exEmbryo <- embryos[["CD"]][["embryo1"]]
-exEmbryo_info <- embryos[["info"]][["embryo1"]]
+embryo_name <- exEmbryo_info$name  # Now you can identify it
 ```
 
-**Method 3: Extract by name from the start (recommended)**
+**Method 3: By name (best practice)**
 ```{r}
-# If you know the embryo name, access it directly:
 embryo_name <- "embryo1"
 exEmbryo <- embryos[["CD"]][[embryo_name]]
 exEmbryo_info <- embryos[["info"]][[embryo_name]]
@@ -115,162 +337,139 @@ exEmbryo_info <- embryos[["info"]][[embryo_name]]
 
 Many functions in this package are designed to work with the entire `embryos` list structure. For example, `plotBlotLine()` automatically processes all embryos and plots them together. However, 3D visualization and tree plotting functions (`drawEmbLine()`, `drawEmbVal()`, `CD_tree_plot()`) require a **single embryo data.frame** as input.
 
-To iterate over all embryos for individual processing:
+**Iterate over all embryos:**
 ```{r}
-# Get list of embryo names
 embryo_names <- names(embryos[["CD"]])
 
-# Process each embryo
 for (emb_name in embryo_names) {
   this_embryo <- embryos[["CD"]][[emb_name]]
   this_info <- embryos[["info"]][[emb_name]]
-  # Your processing code here
-  # e.g., create 3D plots, save with embryo-specific file name
+  
+  # Process each embryo (e.g., create plots with embryo-specific filenames)
 }
 ```
 
-**Note on Advanced Multi-Embryo Operations**: 
-- **Averaged trees**: Not currently implemented, but could be achieved by aggregating data across embryos using `aggEmbryos()` with custom post-processing
-- **Averaged 3D positions**: Possible by aligning embryos to equivalent developmental stages (using `alignTime()`), then averaging x/y/z coordinates across embryos for each cell type at matched timepoints
+### Selecting Cells Across Multiple Embryos
+The `getCells()` function extracts specific cells from all embryos in your dataset. It works like `grepCells()` but operates on the entire multi-embryo structure.
 
-## Example Workflow
-### Process a Single Embryo
+Like `grepCells()`, `getCells()` supports wildcards and mixing cells/lineages:
 ```{r}
-# Load a single embryo file (from StarryNite format zip file)
-# Genotype: JIM767 is tbx-35(tm1789) II; pha-4::GFP; ...
-embryo_list <- readEmbryoTable(file = "sample_data/20241108_JIM767_25_L5-edit.zip")
+# Mix specific cells and lineages with wildcards
+mixed_cells <- getCells(embryos,
+                        cells = c("MSaxaa", "Exla"),     # Wildcards
+                        lineages = c("ABal", "ABpr"),   # Full lineages
+                        times = 100)
 
-# IMPORTANT: Extract the data.frame from the returned list using [[1]]
-# The list contains: [[1]] = data.frame, [[2]] = boolean for time correction
-embryo <- embryo_list[[1]]
-
-# Verify we have a data.frame
-class(embryo)  # Should print "data.frame"
-```
-#### Plot the embryo nucleus positions in 3D. 
-Plot the lineages
-```{r}
-time = 139
-figO <- drawEmbLine(
-  #no lineage argument provided, so the function will group cells into ABa, ABp, MS, E, C, D, P4
-  embryo, time, cellSize=10, title = "Default 7 Lineages", 
-  xSize=0.08651, ySize=0.08651, zSize=0.5 #unprocessed data can have different x,y,z scales, specify here
-  )
-figO[[1]]
-```
-#### Align embryo position/rotation and then plot
-`totalRePosition` will trsnslate all embryo cells to center the embryo at (0,0,0), align embryo anterior with x+ direction, left with y+, dorsal with z+.
-```{r}
-rotatedEmbryo <- totalRePosition(
-  embryo, time = time, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
-  xSize=0.08651, ySize=0.08651, zSize=0.5) #the xyz dimension is corrected during rotation
-#so we no longer have to provide xyz dimension size in plotting function (defualt is 1)
-figRotated <- drawEmbLine(
-  rotatedEmbryo, time, title = "Default Lineages Aligned", cellSize=10
-  )
-figRotated[[1]]
-```
-#### Customize Lineage 3D plot
-`drawEmbLine` function allows user to select an array of lineages to highlight, then assign color and alpha (transparency) for **each selected lineage** as two array with corresponding ordering. 
-
-- Nucleus not selected will be grey and transparent. 
-- The colors and alphas should be delivered as lists where each element correspond to one lineage in "lineges" list. 
-- If no colors are indicated, or the length of colors array doesn't match that of lineages list, the function will automatically assign unique colors from viridis palette.
-```{r}
-figABp <- drawEmbLine(
-  rotatedEmbryo, 
-  lineages = c("ABp", "C"), 
-  colors = c(rgb(0.7,0,0.5),rgb(0.3,1,0)), #"ABp" will have rgb(0.7,0,0.5),
-  alphas = c(0.3, 1), 
-  cellSize=6, time = time
-  )
-figABp[[1]]
-```
-#### Plot 3D with marker gene expression
-The default color scale is Viridis
-```{r}
-figVal <- drawEmbVal(
-  rotatedEmbryo, time = time, title = "expression in default color scale",
-  cellSize=10)
-figVal[[1]]
-```
-#### Gene expression with customized color scale
-`drawEmbVal` function offers several options to customize colors through `colorScheme` argument
-
-- One may supply a list of vectors, where each vector is a mapping from a normalized value (0 for minimum, 1 for maximum, 0.5 for halfway in the range) to an R color representation. The mapping for 0 and 1 are mandatory. 
-- The `colorScheme` argument can also be a palette name string of the following list: Blackbody, Bluered, Blues, Cividis, Earth, Electric, Greens, Greys, Hot, Jet, Picnic, Portland, Rainbow, RdBu, Reds, Viridis, YlGnBu, YlOrRd.
-
-```{r}
-figVal <- drawEmbVal(
-  rotatedEmbryo, time = time, title = "expression with black-blue-white-red color scale",
-  # here, define pure balck for minimum value, pure blue for 1/3 between maximum and minimum etc.
-  colorScheme = list(c(0,rgb(0,0,0)), c(1/3,rgb(0,0,1)), c(2/3,rgb(1,1,1)), c(1,rgb(1,0,0))),
-)
-figVal[[1]]
-```
-#### Lineage Tree colored by Expression
-The expression color scaling methods can be delivered as `transform` argument. 
-- the default "identity" makes a linear mapping between expression and color scale
-- "log2", "log10", "log" will bring resolute lower expression values through a log color scale. 
-```{r}
-treeplot <- CD_tree_plot(
-  rotatedEmbryo, 
-  min_gain=-1000, max_gain = 8000, transform = "identity", 
-  root = "ABara", end_time=time)
-treeplot
+# Inspect results from first embryo
+head(mixed_cells[[1]])
 ```
 
-### Process a Batch of Embryos
-#### Read a directory of embryo tables. 
-```{r} 
-embryos <- CD_In(directory = "sample_data/JIM767_25/", prefix = "CD",
-                 time.prefix = "TIME", time.suffix = ".csv",
-                 info.prefix = "", info.suffix = "AuxInfo.csv")
-```
+### Multi-Embryo Analysis
 
-#### Optional: implement depth correction.
+#### Depth Correction
+Correct for fluorescence loss at greater depths:
 ```{r}
 # get the correction parameters for the model of fluoresence loss by depth 
-model <- depthCorrectionParm(embryos, lineage = c("ABara", "ABalp", "E"), alignCell = "E", startT = 30, endT = 150, exc_zMin = 0.2, exc_zMax = 1, zMax = 67)
-# correct the embryos' data with the model
+model <- depthCorrectionParm(
+  embryos, 
+  lineage = c("ABara", "ABalp", "E"),  # Cells used for fluoresence loss fitting
+  alignCell = "E",                     # Cell used for alignment
+  startT = 30, endT = 150,             # Time window for fitting
+  exc_zMin = 0.2, exc_zMax = 1,        # Excitation at z=1 and zMax
+  zMax = 67)                           # Maximum z coordinate
+
+# Apply Correction
 embryos <- embryos |> 
-  dataCorrection(lineage=c("ABara", "ABalp", "P1"), model = model, zMax = 67, exc_zMin = 0.2, exc_zMax = 1)
+  dataCorrection(lineage=c("ABara", "ABalp", "P1"), 
+                 model = model, 
+                 zMax = 67, exc_zMin = 0.2, exc_zMax = 1)
 ```
-#### Plot the reporter expression against time
+#### Plot Expression Over Time
 `plotBlotLine` function plot the expression of selected cells, averaged in each embryo at each time point. Each embryo will be represented by a unique curve.
+
+- Uses `getCells()` internally for flexible cell selection (see "Selecting Cells Across Multiple Embryos" section).
 - Synchronize start point for each embryo: if an `aligningCell` argument is delivered, the function will translate the time points in each embryo to make the last time point of `aligningCell` lifespan equal to `align_t` time. 
 ```{r}
-yrange = list(0,16000) #default figure x,y range
+# Set up plot parameters
+yrange = list(0,16000)
 xrange = list(-50,150)
-embNames <- names(embryos[["CD"]]) 
-emb_palette <- viridis::viridis(length(embNames)) |> setNames(embNames)#set up palette to make color consistent for the same embryo across different plots
-cellsExp <- strsplit("ABal, ABalp, ABalpa, ABalpaa, ABalpaaa, ABalpaaaa, ABalpaaaaa", split=", ")[[1]]
+embNames <- names(embryos[["CD"]])
+
+#set up consistent color palette for the same embryo across different plots
+emb_palette <- viridis::viridis(length(embNames)) |> setNames(embNames)
+# Define cells to track
+cellsExp <- c("ABal", "ABalp", "ABalpa", "ABalpaa", "ABalpaaa", "ABalpaaaa", "ABalpaaaaa")
+
 fig_blot_cells <- embryos|>plotBlotLine(
   title = 'specific cells example', color_palette = emb_palette, 
-  aligningCell = "ABal", align_t = 0,
+  aligningCell = "ABal", align_t = 0, # Align this cell's end time to 0 in all embryos
   cells = cellsExp, 
   xrange = xrange, yrange = yrange)
 fig_blot_cells
 ```
-#### Track Expression with Various Cell and Lineage Representations
-- You can take a cell and all its daughter cells into account by putting it into `lineages` argument
-- Both `cells` and `lineages` accepts "x" within cell name, so "ABpxpappp" would include both "ABplpappp" and "ABprpappp"
-- The function averages all cells selected at each time point, the user can mix `cells` and `lineages` from with different parents. 
+**Track Expression with Various Cell and Lineage Representations**
 ```{r}
 fig_blot_lines <- embryos|>plotBlotLine(title = 'lineages example',
                             aligningCell = "ABalp", align_t = 0, 
-                            cells = c("Exxx", "Exxxx"), #every 3rd and 4th generation E cell
+                            cells = c("Exxx", "Exxxx"), #every 4th and 5th generation E cell
                             lineages = c("ABalp","ABara"), 
                             color_palette = emb_palette,
                             xrange = xrange, yrange = yrange)
 fig_blot_lines
 ```
-#### Extract a Single Embryo from Multi-Embryo Data for 3D Visualization
+### Saving Multiple Embryos
 
-When you need to visualize individual embryos from a multi-embryo dataset, extract both the data and metadata to preserve embryo identity:
+After processing your embryo data (e.g., depth correction, time alignment), you'll want to save the modified data for future use. The `CD_Save()` function writes all embryos in your dataset back to CSV files.
+
+**What gets saved:**
+- **CD files**: One `CDembryoName.csv` file per embryo containing the modified cell tracking data
+- **Info files**: One `embryoNameAuxInfo.csv` file per embryo containing metadata and processing flags
+
+**Basic usage:**
 ```{r}
-library(reticulate)
-reticulate::use_virtualenv("../LIVEtools_venv/")
+# Save all embryos to the "output" directory
+CD_Save(CDDataL = embryos, saveDir = "output")
+```
+
+**Resulting file structure:**
+After running `CD_Save()`, your output directory will contain:
+```
+output/
+  ├── CDembryo1.csv       # Modified cell tracking data for embryo 1
+  ├── CDembryo2.csv       # Modified cell tracking data for embryo 2
+  ├── ...
+  ├── embryo1Info.csv     # Updated metadata for embryo 1 (includes processing flags)
+  ├── embryo2Info.csv     # Updated metadata for embryo 2
+  └── ...
+```
+
+**Important notes:**
+- The function automatically adds a trailing "/" to `saveDir` if needed
+- CD files use prefix "CD" + original embryo name from `CD_In()`
+- Info files use embryo name + "Info.csv" suffix
+- Processing flags are automatically updated (depth_corrected, time_corrected, etc.)
+- Existing files with name collisions are **overwritten**
+
+**Reloading saved data:**
+```{r}
+# Load your processed data in a future session
+embryos_reloaded <- CD_In(
+  directory = "output/",
+  prefix = "CD",
+  info.prefix = "",
+  info.suffix = "Info.csv"
+)
+
+# Check processing status
+embryos_reloaded[["info"]][[1]]$depth_corrected  # Should be TRUE
+```
+
+### 3D Visualization from Multi-Embryo Data
+
+The 3D plotting functions (`drawEmbLine`, `drawEmbVal`) require a single embryo data.frame as input, not the full multi-embryo list.
+
+#### Extract and Visualize One Embryo
+```{r}
 # Extract first embryo with its metadata
 embryo_names <- names(embryos[["CD"]])
 first_emb_name <- embryo_names[1]
@@ -279,35 +478,76 @@ exEmbryo <- embryos[["CD"]][[first_emb_name]]
 exEmbryo_info <- embryos[["info"]][[first_emb_name]]
 
 # Now we can identify this embryo
-message(paste("Processing embryo:", exEmbryo_info$name))
+message("Processing embryo: ", exEmbryo_info$name)
 
 # Rotate and visualize
-exEmbryo <- totalRePosition(
-  exEmbryo, time = time, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
+exEmbryoRotated <- totalRePosition(
+  exEmbryo, time = 139, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
   xSize=0.08651, ySize=0.08651, zSize=0.5)
 
-fig_3D_list <- drawEmbLine(exEmbryo, time)
+fig_3D_list <- drawEmbLine(exEmbryoRotated, time=139, title=first_emb_name)
 fig_3D_list[[1]]
 ```
 
-####save one frame as a png, keeping color scale legend
+#### Save the 3D Plot as Static Images
+The `saveEmbImg()` function requires Python dependencies (plotly, kaleido). Set up once:
 ```{r}
-saveEmbImg(fig_3D_list[[1]], output_file="example_3D.png",keepLabels=TRUE)
+#setup reticulate dependencies
+library(reticulate)
+#point your python installation to reticulate
+reticulate::use_virtualenv("../LIVEtools_venv/")
+#reticulate wake-up call
+reticulate::py_run_string("import sys")
+```
+**Save a single frame:**
+```{r}
+saveEmbImg(fig_3D_list[[1]], output_file="output/example_3D.png",keepLabels=TRUE)
 ```
 
-##save a collection of frames that could be combined make a movie (in FIJI or other image analysis software)
+#### Generate Image Sequences for Movies
+Create a series of images across developmental time that could be combined make a movie (in FIJI or other image analysis software)
 ```{r}
-outdir <- "out/"
-dir.create("out", recursive = TRUE, showWarnings = FALSE)
+outdir <- "output/movie_frames/"
+dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
 
-for(time in 1:150){
-    if(time %% 10 == 0){
-        message(time)
+for(time in 1:20){
+    if(time %% 5 == 0){
+        message("Processing time point ", time)
     }
     fig_3D_list <- drawEmbLine(
-        exEmbryo, time, cellSize=15,
+        exEmbryoRotated, time, cellSize=15,
         xSize=1, ySize=1, zSize=1 #unprocessed data can have different x,y,z scales, specify here
     )
-    saveEmbImg(fig_3D_list[[1]], output_file=paste0(outdir, "example_3D", time,".png"),keepLabels=TRUE, width = 800, height = 650, zoom=1.3)
+    suppressMessages(
+      saveEmbImg(
+        fig_3D_list[[1]], 
+        output_file=paste0(outdir, "example_3D", time,".png"),
+        keepLabels=TRUE, 
+        width = 800, height = 650, zoom=1.3)
+    )
 }
 ```
+
+## Troubleshooting
+
+**Problem: Error when using embryo_list directly in plotting**
+- **Cause**: `readEmbryoTable()` returns a list, but plotting functions expect a data.frame
+- **Solution**: Extract with `[[1]]`: `embryo <- embryo_list[[1]]`
+
+**Problem: "Cannot open file for writing"**
+- **Cause**: Output directory doesn't exist or insufficient permissions
+- **Solution**: `dir.create("output", recursive = TRUE, showWarnings = FALSE)`
+
+**Problem: Reloaded data has extra "X" column**
+- **Cause**: Saved with `row.names = TRUE` (the default)
+- **Solution**: Always use `row.names = FALSE` in `write.csv()`
+
+**Problem: Lost embryo identity after extraction**
+- **Cause**: Extracted embryo without its metadata
+- **Solution**: Extract both: `embryos[["CD"]][[name]]` and `embryos[["info"]][[name]]`
+
+**Problem: Unable to reload with `CD_In()`**
+- **Cause**: File naming doesn't match prefix/suffix patterns
+- **Solution**: Ensure files follow conventions:
+  - Cell data: `[prefix][embryoName].csv` (e.g., `CDembryo1.csv`)
+  - Metadata: `[info.prefix][embryoName][info.suffix]` (e.g., `embryo1Info.csv`)
