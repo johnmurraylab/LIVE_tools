@@ -126,20 +126,22 @@ All other package functionality works without Python.
 The `saveEmbImg()` function depends on `plotly::save_image`, which uses the *reticulate* package to call Python's *kaleido* module and convert plotly plots (HTML widgets) to static images.
 
 ### Requirements
-- Python 3.8, 3.9, or 3.10 (recommended for compatibility with kaleido 0.1.0)
-- Python packages: plotly, numpy, kaleido==0.1.0
+- Python 3.8, 3.9, or 3.10 (recommended for compatibility with kaleido 0.2.1)
+- Python packages: plotly, numpy, kaleido==0.2.1
 
 ### 3.1 Create a Python Virtual Environment
-We recommend using a Python virtual environment to keep these dependencies isolated. This is because LIVEtools requires an older version of *kaleido* (0.1.0) that may conflict with other Python projects. 
+We recommend using a Python virtual environment to keep these dependencies isolated. This is because LIVEtools requires an older version of *kaleido* (0.2.1) that may conflict with other Python projects. 
 The guide will provide the most lightweight option to manage python: [python venv](https://docs.python.org/3/library/venv.html). But *reticulate* do allow other methods (like conda) for users more proficient with python. 
 
 **In your system Terminal** (not R Console):
 
 1. Navigate to a directory where you would like to put your python venv directory.
-2. Create a new virtual environment named 'livetools_env'. (you can choose other names, just remember to refer to the name you choose in following steps)
+2. Create a new virtual environment. 
+(For this example we are creating one called `livetools_env` under home directory `~`. 
+You can choose other directories and names, just remember to refer to the name you choose in the following steps)
 
     ```sh
-    python3 -m venv livetools_env
+    python -m venv livetools_env
     ```
    This would create a directory under the current working directory with structure:
    
@@ -151,21 +153,21 @@ The guide will provide the most lightweight option to manage python: [python ven
     #        └── .......
     #    └── ......            #Other folders and files
     ```
-3. Activate the virtual environment
+3. Activate the virtual environment to make changes to it. 
   On macOS/Linux:
-    
+  
     ```sh
     source livetools_env/bin/activate
     ```
   On Windows:
-    
+  
     ```powershell
     livetools_env\Scripts\activate
     ```
 4. Install required Python packages
 
     ```bash
-    pip install numpy plotly kaleido==0.1.0
+    pip install numpy plotly kaleido==0.2.1
     # You can now deactivate the environment
     deactivate
     ```
@@ -187,7 +189,6 @@ Replace the path with the actual path to your virtual environment's python execu
 **Option B: Set each time before using saveEmbImg (For occasional use)**
 
 Each time you want to use `saveEmbImg()`, run these commands in R Console **before** loading LIVEtools:
-
 ```r
 # Load reticulate
 library("reticulate")
@@ -220,6 +221,58 @@ reticulate::py_module_available("plotly")   # Should return TRUE
 reticulate::py_module_available("numpy")    # Should return TRUE
 
 # If all return TRUE, the setup is successful!
+```
+
+### Troubleshooting Reticulate
+
+**Problem: Wrong Python being used**
+
+```r
+reticulate::py_config()
+# Shows unexpected Python path
+```
+
+**Solution:**
+
+Clear reticulate's Python cache: 
+```r
+Sys.setenv(RETICULATE_PYTHON = "")
+```
+Restart R session. Then explicitly set the correct path before loading any packages:
+```r
+library(reticulate)
+reticulate::use_virtualenv("~/livetools_env", required = TRUE)
+reticulate::py_config()  # Verify correct Python is now being used
+```
+
+**Problem: Architecture mismatch**
+
+Some mac users might have an x86(Intel) architecture Python despite the computer having ARM(Apple silicon) processors, which might cause issue when using venv. 
+```
+# Error when running reticulate::py_run_string
+Error:
+......
+...incompatible architecture...
+```
+
+**Solution:** Install Compatible Python Specifically
+
+*Perform these steps in Terminal*: 
+Use ARM version of `brew` (not Intel) to install a stable mac architecture python
+```sh
+/opt/homebrew/bin/brew install python@3.10
+```
+Then remove your old virtual environment,
+```sh
+rm -rf ~/livetools_env
+```
+and create a new venv.
+```sh
+/opt/homebrew/bin/python3.10 -m venv ~/livetools_env #specifically call ARM Python
+```
+Finally check the architecture of the new venv
+```sh
+~/livetools_env/bin/python -c "import platform; print(platform.machine())"
 ```
 
 ## Verify Installation
