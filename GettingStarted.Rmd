@@ -218,11 +218,17 @@ treeplot
 
 After processing (e.g., rotation, manual corrections), save your modified embryo with R built-in `write.csv`:
 
+```{r}
+#prepare a directory
+dir_path <- "output_single"
+if(!dir.exists(dir_path)){dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)}
+```
+
 #### Save Cell Tracking Data Only
 ```{r}
 write.csv(
   rotatedEmbryo, 
-  file = "output/CDembryo1_rotated.csv", 
+  file = "output_single/CDembryo1_rotated.csv", 
   row.names = FALSE  # Important: prevents adding row numbers as a column
 )
 ```
@@ -240,15 +246,15 @@ embryo_info <- data.frame(
 )
 
 # Save both files
-write.csv(rotatedEmbryo, "output/CDembryo1_rotated.csv", row.names = FALSE)
-write.csv(embryo_info, "output/embryo1Info.csv", row.names = FALSE)
+write.csv(rotatedEmbryo, "output_single/CDembryo1_rotated.csv", row.names = FALSE)
+write.csv(embryo_info, "output_single/embryo1Info.csv", row.names = FALSE)
 ```
 
 #### Reload a Saved Embryo
 ```{r}
 # Read.csv returns a data.frame directly (no [[1]] needed)
-embryo_reloaded <- read.csv("output/CDembryo1_rotated.csv", header = TRUE)
-embryo_info_reloaded <- read.csv("output/embryo1Info.csv", header = TRUE)
+embryo_reloaded <- read.csv("output_single/CDembryo1_rotated.csv", header = TRUE)
+embryo_info_reloaded <- read.csv("output_single/embryo1Info.csv", header = TRUE)
 
 # Verify
 dim(embryo_reloaded)
@@ -375,7 +381,7 @@ model <- depthCorrectionParm(
   lineage = c("ABara", "ABalp", "E"),  # Cells used for fluoresence loss fitting
   alignCell = "E",                     # Cell used for alignment
   startT = 30, endT = 150,             # Time window for fitting
-  exc_zMin = 0.2, exc_zMax = 1,        # Excitation at z=1 and zMax
+  exc_zMin = 0.2, exc_zMax = 1,        #excitation strength at z=1 and zMax
   zMax = 67)                           # Maximum z coordinate
 
 # Apply Correction
@@ -427,8 +433,11 @@ After processing your embryo data (e.g., depth correction, time alignment), you'
 
 **Basic usage:**
 ```{r}
-# Save all embryos to the "output" directory
-CD_Save(CDDataL = embryos, saveDir = "output")
+#again, prepare a directory
+dir_path_multi <- "output_multi"
+if(!dir.exists(dir_path_multi)){dir.create(dir_path_multi, recursive = TRUE, showWarnings = FALSE)}
+# Save all embryos to the "dir_path_multi" directory
+CD_Save(CDDataL = embryos, saveDir = dir_path_multi)
 ```
 
 **Resulting file structure:**
@@ -454,7 +463,7 @@ output/
 ```{r}
 # Load your processed data in a future session
 embryos_reloaded <- CD_In(
-  directory = "output/",
+  directory = dir_path_multi,
   prefix = "CD",
   info.prefix = "",
   info.suffix = "Info.csv"
@@ -485,7 +494,7 @@ exEmbryoRotated <- totalRePosition(
   exEmbryo, time = 139, indicatorP = "C", indicatorD = "Cxa", indicatorV = "MSxxp",
   xSize=0.08651, ySize=0.08651, zSize=0.5)
 
-fig_3D_list <- drawEmbLine(exEmbryoRotated, time=139, title=first_emb_name)
+fig_3D_list <- drawEmbLine(exEmbryoRotated, time=139, title=first_emb_name, cellSize = 5)
 fig_3D_list[[1]]
 ```
 

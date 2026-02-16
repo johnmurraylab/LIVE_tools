@@ -10,3 +10,5 @@
 ^output$
 temp
 ^.*CD.*\.csv$
+^output_single$
+^output_multi$

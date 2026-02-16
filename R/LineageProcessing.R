@@ -40,12 +40,13 @@ readEmbryoTable <- function(file, time.file = NULL){
     if(file.exists(time.file)){
       message("getting time data from: ", time.file)
       timed <- T
+      this_time <- read.table(time.file, header = F)[,2:3]
+      colnames(this_time)<-c("time","realTime")
+      this_time[,2] <- this_time[,2] / 60
+      CD_df <- merge(CD_df, this_time, by = "time", all.x = TRUE)
+      CD_df <- CD_df[,!names(CD_df)%in%"realTime"]
     }
-    TIME <- read.table(time.file, header = F)[,2:3]
-    colnames(TIME)<-c("time","realTime")
-    CD_df <- merge(CD_df, TIME, by = "time", all.x = TRUE)
-    CD_df$time <- CD_df$realTime/60
-    CD_df <- CD_df[,!names(CD_df)%in%"realTime"]
+    else{warning("time data not found for: ", file)}
   }
   return(list(CD_df, timed))
 }

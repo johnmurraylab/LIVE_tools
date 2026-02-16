@@ -22,4 +22,5 @@ readStarryNiteZip.Rmd
 renv/*
 renv*
 *temp*
-output/*
+output_multi/*
+output_single/*
