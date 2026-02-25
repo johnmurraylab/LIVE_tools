@@ -126,7 +126,7 @@ All other package functionality works without Python.
 The `saveEmbImg()` function depends on `plotly::save_image`, which uses the *reticulate* package to call Python's *kaleido* module and convert plotly plots (HTML widgets) to static images.
 
 ### Requirements
-- Python 3.8, 3.9, or 3.10 (recommended for compatibility with kaleido 0.2.1)
+- Python>=3.8 (recommended for compatibility with kaleido 0.2.1)
 - Python packages: plotly, numpy, kaleido==0.2.1
 
 ### 3.1 Create a Python Virtual Environment

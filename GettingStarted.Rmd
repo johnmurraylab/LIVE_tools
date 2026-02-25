@@ -373,7 +373,9 @@ head(mixed_cells[[1]])
 ### Multi-Embryo Analysis
 
 #### Depth Correction
-Correct for fluorescence loss at greater depths:
+Absorption and scattering of the excitation light and fluorescence cause to fluorescence intensity to decrease as image depth increase away from fluorescence source. We model the light attenuation effect with a logarithmic model:
+$f = f_{real} \times e^{a \times z} \times b$ where $a$ and $b$ are factors to be determined, and $z$ is the depth.
+We then assume that the same lineage have relatively constant expression levels and therefore comparable in terms of response to fluorescence strength. So in `depthCorrectionParm` function, we can select lineages to fit their fluoresence-vs-depth curve against the model. The output model can be applied to the embryos where the model was learned, or a different set of embryos in function `dataCorrection`.
 ```{r}
 # get the correction parameters for the model of fluoresence loss by depth 
 model <- depthCorrectionParm(
