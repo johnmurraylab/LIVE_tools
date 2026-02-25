@@ -65,11 +65,8 @@ CD_In<-function(directory, prefix = "", suffix = ".csv",
       for(col in colnames(this_info)){embryos.Info[[emb]][col] <- this_info[col]}
     }
     names(embryos.Info) <- embNames
-    CDDataL[['info']] <- embryos.Info
   }
-  else{
-    CDDataL[['info']] <- data.frame(emb = embNames, name = embNames)
-  }
+  CDDataL[['info']] <- embryos.Info
   CDDataL[['CD']] <- list()
   for (emb in embNames) {
     CD.Path <- file.path(directory, paste0(prefix,emb,suffix))
