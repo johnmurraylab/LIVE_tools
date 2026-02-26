@@ -1,18 +1,33 @@
-#' drawEmb
-#' This file contains several functions relevant to drawing a 3D (interactive) embryo,
-#' able to represent expression levels and highlight lineages
-#' if deliver multiple "lineages" must also deliver a list "lineageColors" with elements corresponding to "lineages"
+# drawEmb
+# This file contains several functions relevant to drawing a 3D (interactive) embryo,
+# able to represent expression levels and highlight lineages
+# if deliver multiple "lineages" must also deliver a list "lineageColors" with elements corresponding to "lineages"
 
 
-#' drawEmbVal draw the nucleus positions of the embryo in 3D scatter plots, colored by expression
+#' drawEmbVal
+#' @description
+#' draw the nucleus positions of the embryo in 3D scatter plots, colored by expression
 #'
 #' @param embryoCD the embryo dataframe with cell, time, and blot(expression) column, mandatory
 #' @param time which time to plot the embryo, mandatory
+#' @param title figure title text
 #' @param valCol column that will color the nucleus by
 #' @param lineages a list of lineages to highlight (plot with the given symbol in "shapes" parameter)
 #' @param shapes a list of shapes to plot each lineage given in "lineages"
 #' @param ReporterForAll color the nucleus points by expression or not (default TRUE)
-#' @param colorScheme a list of at least 2 vectors made of a number between 0 and 1 to specify expression fraction, and a color value to specify color fro that fraction
+#' @param colorScheme A color scale definition. This can be:
+#' \itemize{
+#'   \item \strong{A list of vectors:} Each sub-vector maps a normalized value
+#'   (0 to 1) to an R color.
+#'   \itemize{
+#'     \item Must include mappings for 0 and 1. Example: \code{list(c(0, "blue"), c(1, "red"))}
+#'     \item Can add intermediate values: \code{list(c(0, "blue"), c(0.5, "white"), c(1, "red"))}
+#'   }
+#'   \item \strong{A palette name string:} One of the
+#'   \href{https://plotly.com/r/reference/scatter3d/}{Plotly scatter3d} compatible strings:
+#'   \emph{Blackbody, Bluered, Blues, Cividis, Earth, Electric, Greens, Greys,
+#'   Hot, Jet, Picnic, Portland, Rainbow, RdBu, Reds, Viridis, YlGnBu, YlOrRd.}
+#' }
 #' @param alpha_selected alpha value (opacity) for the selected lineages
 #' @param alpha_other alpha value (opacity) for other lineages
 #' @param maxBlot upper limit for expression coloring
@@ -39,7 +54,7 @@
 #' @export
 #' @import plotly
 #' @import viridis
-drawEmbVal<-function(embryoCD, time, valCol = "blot",
+drawEmbVal<-function(embryoCD, time, valCol = "blot", title = NULL,
                      lineages=NULL, shapes = NULL, cellSize = 10,
                      ReporterForAll=F, colorScheme = NULL, alpha_selected = NULL, alpha_other = NULL,
                      maxBlot = NULL, minBlot = NULL,
@@ -56,17 +71,20 @@ drawEmbVal<-function(embryoCD, time, valCol = "blot",
   embDat<- left_join(embDat, cell_value, by = "cell")
   if(is.null(maxBlot)){maxBlot <- max(embDat$value)}
   if(is.null(minBlot)){minBlot <- min(embDat$value)}
-  if(identical(lineages, NULL)){
-    lineages <- c("P0")
-    if(length(shapes) != length(lineages)){
-      shapes <- c("circle")
-    }
+  if(identical(lineages, NULL) | identical(lineages, NA)){#default P0 lineage
+    lineages <- "P0"
+    if(length(shapes) != 1){shapes <- c("circle")}
     if(is.null(alpha_selected)){alpha_selected = 0.75}
-    if(is.null(alpha_other)){alpha_other = 0.4}
-  } #default lineages
+  }
+  else if(!(is.character(lineages) | is.vector(lineages))){
+    warning("'lineages' parameter of wrong type, using P0")
+    lineages <- "P0"
+    if(length(shapes) != 1){shapes <- c("circle")}
+    if(is.null(alpha_selected)){alpha_selected = 0.75}
+  }
   else{
     if(length(shapes) != length(lineages)){
-      print("\'shapes\' parameters not properly specified, using circles for all")
+      warning("'shapes' parameters not properly specified, using circles for all")
       # shapesSet <- schema(F)$traces$scatter$attributes$marker$symbol$values
       # shapesSet <- grep("[a-z]", shapesSet, value = TRUE)
       # shapesSet <- shapesSet[-grep("dot", shapesSet)]
@@ -76,12 +94,9 @@ drawEmbVal<-function(embryoCD, time, valCol = "blot",
       shapes <- rep("circle", times = length(lineages))
     }
     if(is.null(alpha_selected)){alpha_selected = 1}
-    if(is.null(alpha_other)){alpha_other = 0.4}
   }
-  if(is.null(colorScheme)){colorScheme =  "Viridis"}
-  else if(colorScheme=="blackBlueOrange"){
-    colorScheme<-list(c(0,rgb(0,0,0)), c(0.3,rgb(0,0.2,1)), c(0.7,rgb(1,0,0.2)), c(1,rgb(1,0.7,0.3)))}
-  else if(colorScheme=="blackOrange"){colorScheme<-list(c(0,rgb(0,0,0)), c(0.6,rgb(1,0.1,0.1)), c(1,rgb(1,0.7,0.3)))}
+  if(is.null(alpha_other)){alpha_other = 0.4} #other cells transparent by default
+  if(identical(colorScheme, NULL)){colorScheme =  "Viridis"} #default colorscale
 
   # rangeDim <- function(dimVals){
   #   span <- max(dimVals)-min(dimVals)
@@ -102,6 +117,7 @@ drawEmbVal<-function(embryoCD, time, valCol = "blot",
   }
   fig<- plotly::plot_ly() |> #initiate a plotly figure object
     plotly::layout(
+      title = list(text = title, y=0.97),
       scene = list(
         aspectmode = "data",
         xaxis = list(title = xtitle, showgrid = T, showticklabels=aligned),
@@ -177,13 +193,21 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
   return(plotlyFig)
 }
 
-#' drawEmbLine draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage
+#' drawEmbLine
+#' @description draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage
 #'
 #' @param embryoCD the embryo dataframe with cell, time column, mandatory
 #' @param time numeric, mandatory, which time to plot the embryo, automatically choose the closest time point if no exact match
 #' @param lineages a list of lineages to highlight (plot with the given color and opacity in "colors" and "alphas" parameter)
+#' @param title figure title text
 #' @param colors a list of colors to plot each lineage given in "lineages"
 #' @param alphas a list of alpha i.e. opacity for each lineage given in "lineages"
+#' @param outline an R color value to specify the outline color of nucleus
+#'  \itemize{
+#'    \item default as gray outline
+#'    \item input `NULL` to have no pixels
+#'    \item outline have a fixed width by pixel, if the outline covers the whole area of nucleus marker, try increase `cellSize` or turn off outline
+#'  }
 #' @param xSize size of each x unit in embryoCD dataframe, default 1
 #' @param ySize size of each y unit in embryoCD dataframe, default 1
 #' @param zSize size of each z unit in embryoCD dataframe, default 1
@@ -208,7 +232,8 @@ AddGroupExp <-function(plotlyFig, groupName, data, selectedCells, symbol,
 #' @export
 #' @import plotly
 #' @import viridis
-drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = NULL,
+drawEmbLine <- function(embryoCD, time, lineages=NULL, title=NULL,
+                        colors = NULL, alphas = NULL, outline = "#444",
                         xSize=1, ySize=1, zSize=1, aligned = F,
                         alpha_other = 0.2, cellSize = 7.5,
                         center = list(x=0,y=0,z=0), viewPoint = list(x=0,y=0,z=1.8)){
@@ -217,27 +242,34 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = N
   embDat$x <- embDat$x*xSize
   embDat$y <- embDat$y*ySize
   embDat$z <- embDat$z*zSize
-  if(identical(lineages, NULL)){
-    lineages <- list("ABa", "ABp","MS", "E", "C", "D", "P4") #default lineages
+  if(identical(lineages, NULL) | identical(lineages, NA)){
+    lineages <- c("ABa", "ABp","MS", "E", "C", "D", "P4") #default lineages
+  }
+  else if(!(is.character(lineages) | is.vector(lineages))){
+    message("'lineages' parameter of wrong type, using default")
+    lineages <- c("ABa", "ABp","MS", "E", "C", "D", "P4")
   }
   traceCount <- length(lineages)
   if(identical(alphas, NULL)){
-    alphas <- rep(0.75, traceCount) #default alpha
-    print("automatically assigning \"alphas\"")
+    alphas <- rep(1, traceCount) #default alpha
+    message("automatically assigning \"alphas\"")
   }
   else if(length(alphas) != traceCount){
-    alphas <- rep(0.75, traceCount) #default alpha
-    print("\`alphas\` not properly specified")
+    alphas <- rep(1, traceCount) #default alpha
+    warning("`alphas`` not properly specified, automatically assigning \"alphas\"")
   }
 
   if(identical(colors, NULL)){
     colors <- viridis::viridis_pal(option = "H")(traceCount) #default colors
-    print("automatically assigning \"colors\"")
+    message("automatically assigning `colors`")
   }
   else if(length(colors) != traceCount){
-    colors <- viridis::viridis_pal(option = "H")(traceCount) #default alpha
-    print("\`colors\` not properly specified")
+    warning("`colors` not properly specified, automatically assigning `colors`")
+    colors <- viridis::viridis_pal(option = "H")(traceCount)
   }
+
+  if(is.na(outline)){markerLine <- NULL}
+  else{markerLine <- list(color=outline, width = 2)}
 
   if(aligned){
     xtitle <- "AB(\U00B5m)"
@@ -251,15 +283,15 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = N
   }
   fig<-plotly::plot_ly() |> #initiate a plotly figure object
     plotly::layout(
+      title = list(text = title, y=0.97),
       scene = list(
         aspectmode = "data",
         xaxis = list(title = xtitle, showgrid = T, showticklabels=aligned),
         yaxis = list(title = ytitle, showgrid = T, showticklabels=aligned),
         zaxis = list(title = ztitle, showgrid = T, showticklabels=aligned),
-        camera = list(eye = viewPoint, center=center, up = list(x = 0, y = 1, z = 0)
-                      #,projection=list(type="orthographic")
-                      )),
-      legend = list(itemsizing = "constant") ,
+        camera = list(eye = viewPoint, center=center, up = list(x = 0, y = 1, z = 0))
+      ),
+      legend = list(itemsizing = "constant"),
       paper_bgcolor = rgb(1,1,1)
     )
   selectCells <- NULL
@@ -270,7 +302,8 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = N
     thisCells <- grepCells(CDData = embDat, lineages = lineage, dataReturn = F)
     fig <- fig|>AddGroupLine(groupName = lineage,
                              data = embDat, selectedCells = thisCells,
-                             color=color, alpha = alpha, cellSize=cellSize)
+                             color=color, alpha = alpha, cellSize=cellSize,
+                             markerLine = markerLine)
     selectCells <- union(selectCells, thisCells)
   }
   otherCells <- embDat|>rownames()|>as.integer()
@@ -281,7 +314,10 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = N
     y=embDat[otherCells,"y"],
     z=embDat[otherCells,"z"], #cells that are not selected will be plotted transparent
     type = "scatter3d", mode="markers",
-    marker = list(color="black", size = cellSize, opacity = alpha_other, symbol = "circle")
+    marker = list(
+      color="black", size = cellSize, opacity = alpha_other, symbol = "circle",
+      line = NULL
+    )
   )
   return(list(fig, embDat[selectCells,], embDat[-selectCells,]))
 }
@@ -300,14 +336,16 @@ drawEmbLine <- function(embryoCD, time, lineages=NULL, colors = NULL, alphas = N
 #'
 #' @import plotly
 #' @return modified plotly figure
-AddGroupLine <- function(plotlyFig, groupName, data, selectedCells, color, alpha, cellSize){
+AddGroupLine <- function(plotlyFig, groupName, data, selectedCells, color, alpha, cellSize, markerLine){
   out <- plotlyFig|>plotly::add_trace(
     name = groupName,
     x=data[selectedCells,"x"],
     y=data[selectedCells,"y"],
     z=data[selectedCells,"z"],
     type = "scatter3d", mode="markers",
-    marker = list(color=color, size = cellSize, opacity = alpha, symbol = 'circle')
+    marker = list(
+      color=color, size = cellSize, opacity = alpha, symbol = 'circle',
+      line = markerLine)
   )
  out
 }
@@ -341,7 +379,7 @@ saveEmbImg <- function(
   zoom = 1.3,          # >1 moves camera farther away
   pad_frac = 0.07,     # add 7% padding to each axis range
   projection = c("perspective","orthographic")  # choose "orthographic" if desired
-){
+  ){
   projection <- match.arg(projection)
 
   # compute data ranges to pad (works for typical scatter3d/surface traces)

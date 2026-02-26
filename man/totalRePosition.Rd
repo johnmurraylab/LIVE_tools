@@ -2,7 +2,7 @@
 % Please edit documentation in R/LineageProcessing.R
 \name{totalRePosition}
 \alias{totalRePosition}
-\title{totalRePosition center the embryo at 0,0,0 coordinate and rotate the embryo across all time points}
+\title{totalRePosition}
 \usage{
 totalRePosition(
   CDFrame,
@@ -42,5 +42,7 @@ totalRePosition(
 the provided CDFrame rotated
 }
 \description{
-totalRePosition center the embryo at 0,0,0 coordinate and rotate the embryo across all time points
+center the embryo at 0,0,0 coordinate and rotate the embryo across all time points
+this uses the same strategy as \code{RePosition} and defines the orientation based on the specified
+time point, then applies the same rotation to all time points
 }

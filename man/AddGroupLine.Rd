@@ -4,7 +4,16 @@
 \alias{AddGroupLine}
 \title{AddGroupLine}
 \usage{
-AddGroupLine(plotlyFig, groupName, data, selectedCells, color, alpha, cellSize)
+AddGroupLine(
+  plotlyFig,
+  groupName,
+  data,
+  selectedCells,
+  color,
+  alpha,
+  cellSize,
+  markerLine
+)
 }
 \arguments{
 \item{plotlyFig}{the plotly figure object to add extra data point (trace) upon}

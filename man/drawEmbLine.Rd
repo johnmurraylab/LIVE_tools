@@ -2,14 +2,16 @@
 % Please edit documentation in R/drawEmb.R
 \name{drawEmbLine}
 \alias{drawEmbLine}
-\title{drawEmbLine draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage}
+\title{drawEmbLine}
 \usage{
 drawEmbLine(
   embryoCD,
   time,
   lineages = NULL,
+  title = NULL,
   colors = NULL,
   alphas = NULL,
+  outline = "#444",
   xSize = 1,
   ySize = 1,
   zSize = 1,
@@ -27,9 +29,18 @@ drawEmbLine(
 
 \item{lineages}{a list of lineages to highlight (plot with the given color and opacity in "colors" and "alphas" parameter)}
 
+\item{title}{figure title text}
+
 \item{colors}{a list of colors to plot each lineage given in "lineages"}
 
 \item{alphas}{a list of alpha i.e. opacity for each lineage given in "lineages"}
+
+\item{outline}{an R color value to specify the outline color of nucleus
+\itemize{
+\item default as gray outline
+\item input \code{NULL} to have no pixels
+\item outline have a fixed width by pixel, if the outline covers the whole area of nucleus marker, try increase \code{cellSize} or turn off outline
+}}
 
 \item{xSize}{size of each x unit in embryoCD dataframe, default 1}
 
@@ -61,5 +72,5 @@ where to put the imaginative camera initially, default list(x=0,y=0,z=1.8)}
 a list made of: the plotly figure, a dataframe of the highlighted cells, and a dataframe of cells not highlighted
 }
 \description{
-drawEmbLine draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage
+draw the nucleus positions of the embryo in 3D scatter plots, colored by lineage
 }

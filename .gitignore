@@ -14,6 +14,7 @@
 *.dll
 *.log
 *.txt
+*_render.*
 .Rprofile
 README.Rmd
 drawEmb.Rmd
@@ -21,3 +22,7 @@ readStarryNiteZip.Rmd
 .Rprofile
 renv/*
 renv*
+*temp*
+output_multi/*
+output_single/*
+custom.css

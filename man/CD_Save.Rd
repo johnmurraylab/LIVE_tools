@@ -12,5 +12,5 @@ CD_Save(CDDataL, saveDir)
 \item{saveDir}{directory to output the tables and info file}
 }
 \description{
-save cell tracking files along with the
+save cell tracking files along with the embryo information
 }

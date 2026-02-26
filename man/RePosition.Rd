@@ -43,7 +43,8 @@ the slice of the provided CDFrame at time==time, rotated
 }
 \description{
 orientate one embryo at a given time point so that
-the embryo is centered at (0,0,0)
-coordinate the AB axis is aligned to the x-axis,
-DV to z-axis and RL to y-axis
+the embryo is centered at (0,0,0) coordinate
+the AP axis is aligned to the x-axis (P toward x+)
+DV to z-axis (D toward z+) and LR to y-axis (R toward y+)
+Note that other time points are not adjusted - use \code{totalRePosition} to align all time points
 }

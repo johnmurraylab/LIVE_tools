@@ -13,7 +13,11 @@ alignTime(datList, alignCell, alignPoint = 1, align_t = 0, alignBlot = F)
 
 \item{alignPoint}{a 0 to 1 ratio number showing what ratio of the alignCell life to align together (1 means the end, 0 means the start)}
 
-\item{align_t}{the time of the \code{alignCell} at \code{alignPoint} after alignment, if the input is \code{"mean"} the align time will be the mean value of \code{alignPoint} across all embryos}
+\item{align_t}{the time of the \code{alignCell} at \code{alignPoint} after alignment
+\itemize{
+\item if the input is \code{"mean"} the align time will be the mean value of \code{alignPoint} across all embryos
+\item if the input is \code{"mean"} the align time will be the highest value of \code{alignPoint} across all embryos
+}}
 
 \item{alignBlot}{whether and method to align the blot values together default \code{FALSE} for not align, "mean" for aligning the mean values together (by addition/subtraction)}
 }

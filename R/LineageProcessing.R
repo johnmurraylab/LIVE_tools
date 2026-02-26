@@ -38,14 +38,15 @@ readEmbryoTable <- function(file, time.file = NULL){
   timed <- F
   if(!is.null(time.file)){#modify the time attributes
     if(file.exists(time.file)){
-      print(paste0("getting time data from: ", time.file))
+      message("getting time data from: ", time.file)
       timed <- T
+      this_time <- read.table(time.file, header = F)[,2:3]
+      colnames(this_time)<-c("time","realTime")
+      this_time[,2] <- this_time[,2] / 60
+      CD_df <- merge(CD_df, this_time, by = "time", all.x = TRUE)
+      CD_df <- CD_df[,!names(CD_df)%in%"realTime"]
     }
-    TIME <- read.table(time.file, header = F)[,2:3]
-    colnames(TIME)<-c("time","realTime")
-    CD_df <- merge(CD_df, TIME, by = "time", all.x = TRUE)
-    CD_df$time <- CD_df$realTime/60
-    CD_df <- CD_df[,!names(CD_df)%in%"realTime"]
+    else{warning("time data not found for: ", file)}
   }
   return(list(CD_df, timed))
 }
@@ -69,13 +70,26 @@ timeAvg <- function(datList, attribute){
 #' @param datList list of CD-like dataFrames
 #' @param alignCell the cell used to find common time point to align
 #' @param alignPoint a 0 to 1 ratio number showing what ratio of the alignCell life to align together (1 means the end, 0 means the start)
-#' @param align_t the time of the `alignCell` at `alignPoint` after alignment, if the input is `"mean"` the align time will be the mean value of `alignPoint` across all embryos
+#' @param align_t the time of the `alignCell` at `alignPoint` after alignment
+#' \itemize{
+#'  \item if the input is `"mean"` the align time will be the mean value of `alignPoint` across all embryos
+#'  \item if the input is `"mean"` the align time will be the highest value of `alignPoint` across all embryos
+#' }
 #' @param alignBlot whether and method to align the blot values together default `FALSE` for not align, "mean" for aligning the mean values together (by addition/subtraction)
 #' @return modified list of CD-like dataFrames
 #' @export
 alignTime <- function(datList, alignCell, alignPoint = 1, align_t = 0, alignBlot = F){
-  rawTimes <- datList|>lapply(function(df){
-    df[with(df, cell==alignCell),'time']|>quantile(alignPoint)})
+  rawTimes <- datList|>lapply(function(CD){
+    mask = with(CD, cell==alignCell)
+    if(sum(mask)==0){return(NULL)}
+    CD[mask,'time']|>quantile(alignPoint)
+  })
+  for(item in rawTimes){
+    if(is.null(item)){
+      warning("the selected cell doe not exist in an embryo, alignTime abandoned")
+      return(datList)
+    }
+  }
   if(align_t=='mean'){align_t<-mean(unlist(rawTimes))}
   else if(align_t=='max'){align_t<-max(unlist(rawTimes))}
   embryos <- names(datList)
@@ -84,7 +98,7 @@ alignTime <- function(datList, alignCell, alignPoint = 1, align_t = 0, alignBlot
     return(datList[[embName]][,'time']+displace)
   })
   if(alignBlot=="mean"){
-    rawBlots <- datList|>lapply(function(df){df[with(df, expr = cell==alignCell),'blot']|>mean()})
+    rawBlots <- datList|>lapply(function(CD){CD[with(CD, expr = cell==alignCell),'blot']|>mean()})
     blotMean <- mean(unlist(rawBlots))
     blotDiff <- rawBlots|>lapply(function(val){blotMean-val})
     names(blotDiff)<-embryos
@@ -149,10 +163,10 @@ grepCells <- function(CDData, cells=NULL, lineages=NULL,
 #' RePosition
 #' @description
 #'  orientate one embryo at a given time point so that
-#'  the embryo is centered at (0,0,0)
-#'  coordinate the AP axis is aligned to the x-axis,
-#'  DV to z-axis and LR to y-axis.
-#'  Note that other time points are not adjusted - use totalRePosition to align all time points
+#'  the embryo is centered at (0,0,0) coordinate
+#'  the AP axis is aligned to the x-axis (P toward x+)
+#'  DV to z-axis (D toward z+) and LR to y-axis (R toward y+)
+#'  Note that other time points are not adjusted - use `totalRePosition` to align all time points
 #'
 #'
 #' @param CDFrame a CD-like dataFrame
@@ -194,7 +208,7 @@ RePosition <- function(CDFrame, time, indicatorP = "C", indicatorD = "Cxa",
 #' totalRePosition
 #' @description
 #'  center the embryo at 0,0,0 coordinate and rotate the embryo across all time points
-#'  this uses the same strategy as RePosition and defines the orientation based on the specified
+#'  this uses the same strategy as `RePosition` and defines the orientation based on the specified
 #'  time point, then applies the same rotation to all time points
 #'
 #' @param CDFrame a CD-like dataFrame
@@ -240,12 +254,13 @@ totalRePosition <- function(CDFrame, time, indicatorP = "C", indicatorD = "Cxa",
 
 
 rotationVec <- function(CDFrame, indicatorP, indicatorD, indicatorV, indicatorL, indicatorR){
-  # 1) find the AB axis for this embryo
+  # 1) find the AB axis for this embryo (point toward P)
   pca1 <- prcomp(CDFrame[,c('x','y','z')]) #prcomp() always returns unit vectors
   APVect <- pca1$rotation[c(1,2,3)] #get the PC1 transformation UNIT vector
-  PCells <- grepCells(CDFrame, lineages = indicatorP) #make sure that positive value for principle component 1 transformation vector is toward the A side
+  #make sure that positive is toward the P side
+  PCells <- grepCells(CDFrame, lineages = indicatorP)
   PCellsVect <- c(mean(PCells$x), mean(PCells$y), mean(PCells$z))
-  if(sum(PCellsVect*APVect)>0){APVect <- -APVect}
+  if(sum(PCellsVect*APVect)<0){APVect <- -APVect}
   # 2) find the unit transformation vector toward D side
   DVVect <- c(0,0,0)
   if(!is.null(indicatorD)){ #directional contribution from each indicator lineage
@@ -268,10 +283,10 @@ rotationVec <- function(CDFrame, indicatorP, indicatorD, indicatorV, indicatorL,
     VDVect_L <- c(mean(LCells$x), mean(LCells$y), mean(LCells$z)) |> cross_product(APVect)
     DVVect <- DVVect + VDVect_L
   }
-  #do not scale before adding together so that lineages further from AP make more contributions
-  DVVect <- DVVect/sqrt(sum(DVVect^2))#scale into a unit vector
+  # normalize only after adding together so lineages further from AP weights more
+  DVVect <- DVVect/sqrt(sum(DVVect^2))
   # 3) use vector cross product to get RL transformation vector (+ side is the right side)
-  RLVect <- cross_product(APVect, DVVect)
+  RLVect <- cross_product(-APVect, DVVect) # right-hand rule
   transformMatrix <- cbind(APVect,RLVect,DVVect)
   return(transformMatrix)
 }
