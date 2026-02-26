@@ -154,13 +154,14 @@ You can choose other directories and names, just remember to refer to the name y
     #    └── ......            #Other folders and files
     ```
 3. Activate the virtual environment to make changes to it. 
-  On macOS/Linux:
-  
+
+    On macOS/Linux:
+    
     ```sh
     source livetools_env/bin/activate
     ```
-  On Windows:
-  
+    On Windows:
+    
     ```powershell
     livetools_env\Scripts\activate
     ```

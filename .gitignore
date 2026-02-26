@@ -23,6 +23,5 @@ readStarryNiteZip.Rmd
 renv/*
 renv*
 *temp*
-output_multi/*
-output_single/*
+output_*
 custom.css
