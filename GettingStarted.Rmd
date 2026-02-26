@@ -1,3 +1,12 @@
+---
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    fig_width: 8
+    fig_height: 6
+---
 # Getting Started
 
 ## Introduction
@@ -118,10 +127,9 @@ names(cells_t100)
 
 # Summary statistics
 summary(cells_t100$blot)  # Expression values
-table(cells_t100$cell)     # Cell counts
 
 # Find specific cells in your selection
-cells_t100[cells_t100$cell == "ABala", ]
+cells_t100[cells_t100$cell == "MSaaapa", ]
 ```
 
 **Note:** This flexible selection logic (wildcards, lineages, time matching) is also used by:
@@ -509,18 +517,18 @@ library(reticulate)
 reticulate::use_virtualenv("../LIVEtools_venv/")
 #reticulate wake-up call
 reticulate::py_run_string("import sys")
+
+outdir <- "output_img/"
+dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
 ```
 **Save a single frame:**
 ```{r}
-saveEmbImg(fig_3D_list[[1]], output_file="output/example_3D.png",keepLabels=TRUE)
+saveEmbImg(fig_3D_list[[1]], output_file="output_img/example_3D.png",keepLabels=TRUE)
 ```
 
 #### Generate Image Sequences for Movies
 Create a series of images across developmental time that could be combined make a movie (in FIJI or other image analysis software)
 ```{r}
-outdir <- "output/movie_frames/"
-dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
-
 for(time in 1:20){
     if(time %% 5 == 0){
         message("Processing time point ", time)
@@ -542,22 +550,27 @@ for(time in 1:20){
 ## Troubleshooting
 
 **Problem: Error when using embryo_list directly in plotting**
+
 - **Cause**: `readEmbryoTable()` returns a list, but plotting functions expect a data.frame
 - **Solution**: Extract with `[[1]]`: `embryo <- embryo_list[[1]]`
 
 **Problem: "Cannot open file for writing"**
+
 - **Cause**: Output directory doesn't exist or insufficient permissions
 - **Solution**: `dir.create("output", recursive = TRUE, showWarnings = FALSE)`
 
 **Problem: Reloaded data has extra "X" column**
+
 - **Cause**: Saved with `row.names = TRUE` (the default)
 - **Solution**: Always use `row.names = FALSE` in `write.csv()`
 
 **Problem: Lost embryo identity after extraction**
+
 - **Cause**: Extracted embryo without its metadata
 - **Solution**: Extract both: `embryos[["CD"]][[name]]` and `embryos[["info"]][[name]]`
 
 **Problem: Unable to reload with `CD_In()`**
+
 - **Cause**: File naming doesn't match prefix/suffix patterns
 - **Solution**: Ensure files follow conventions:
   - Cell data: `[prefix][embryoName].csv` (e.g., `CDembryo1.csv`)
