@@ -110,7 +110,7 @@ library(LIVEtools)
 ### Method B: Install from Downloaded Release
 1. Go to the [Releases page](https://github.com/johnmurraylab/LIVE_tools/releases) on the GitHub repository
 2. Download LIVEtools release package (with file name `LIVEtools_?.?.?.????.tar.gz` where the `?`s are version numbers) from <a href="https://github.com/johnmurraylab/LIVE_tools/releases">**Releases**</a> on github repository
-3. Then run the following commands in R Console
+3. Then run the following commands in R **Console**
 ```r
 #replace package name with the actual release file name you downloaded
 install.packages("full/path/to/tar.gz", repos = NULL, type = "source")
@@ -178,7 +178,7 @@ After creating the Python environment, you need to tell R's *reticulate* package
 
 **Option A: Set permanently in .Rprofile (Recommended for regular use)**
 
-Add this line to your `.Rprofile` file (put it in your [project direcotry](#for-your-own-projects-after-completing-the-tutorial)) or modify your home directory .Rprofile):
+Add this line to your `.Rprofile` file (put it in your [project directory](#for-your-own-projects-after-completing-the-tutorial)) or modify your home directory .Rprofile):
 
 ```r
 Sys.setenv(RETICULATE_PYTHON = "~/livetools_env/bin/python")
@@ -260,7 +260,7 @@ Error:
 *Perform these steps in Terminal*: 
 Use ARM version of `brew` (not Intel) to install a stable mac architecture python
 ```sh
-/opt/homebrew/bin/brew install python@3.10
+/opt/homebrew/bin/brew install python@3.12
 ```
 Then remove your old virtual environment,
 ```sh
@@ -268,11 +268,11 @@ rm -rf ~/livetools_env
 ```
 and create a new venv.
 ```sh
-/opt/homebrew/bin/python3.10 -m venv ~/livetools_env #specifically call ARM Python
+/opt/homebrew/bin/python3.12 -m venv ~/livetools_env #specifically call ARM Python
 ```
 Finally check the architecture of the new venv
 ```sh
-~/livetools_env/bin/python -c "import platform; print(platform.machine())"
+~/livetools_env/bin/python3.12 -c "import platform; print(platform.machine())"
 ```
 
 ## Verify Installation

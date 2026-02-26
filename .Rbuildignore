@@ -12,3 +12,6 @@ temp
 ^.*CD.*\.csv$
 ^output_single$
 ^output_multi$
+^custom.css$
+^GettingStarted.html$
+^GettingStarted_render.Rmd$
