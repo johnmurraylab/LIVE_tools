@@ -7,7 +7,7 @@ Description: A C. elegans lineage analysis toolkit works from a simple tabular d
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-Imports: 
+Imports:
     data.table,
     dplyr,
     ggtree,
@@ -15,7 +15,10 @@ Imports:
     reticulate,
     ggplot2,
     tidyr,
-    viridis
+    viridis,
+    ape,
+    patchwork,
+    scales
 Suggests:
     BiocManager
 License: MIT + file LICENSE

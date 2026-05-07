@@ -25,3 +25,5 @@ renv*
 *temp*
 output_*
 custom.css
+output/
+sample_data/
