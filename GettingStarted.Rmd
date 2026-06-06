@@ -222,6 +222,85 @@ treeplot <- CD_tree_plot(
 treeplot
 ```
 
+#### Lineage Tree with Continuous-Resolution Coloring
+
+`plot_lineage_tree()` is a newer alternative to `CD_tree_plot()` that
+supports both **cell-resolution** coloring (one color per cell branch,
+like the older function) and **timepoint-resolution** coloring (a
+continuous gradient along each branch, computed from per-timepoint
+values). It also adds cross-division smoothing, NA-tail truncation,
+all-NA cell pruning, piecewise diverging gradients, milestone
+end-times, lineage-subset zoom, and auto-scaled tip labels. The older
+`CD_tree_plot()` is still supported and unchanged; use whichever is
+more convenient.
+
+**Example 1: cell-resolution.** One color per branch, equivalent to
+`CD_tree_plot()`'s per-cell aggregate but with the new function's
+options for piecewise colors, NA handling, etc.
+
+```{r}
+treeplot_cell <- plot_lineage_tree(
+  rotatedEmbryo,
+  root = "ABara",
+  resolution = "cell",
+  end_time = 139,
+  value_min = -1000, value_max = 8000   # match the CD_tree_plot scale
+)
+treeplot_cell
+```
+
+**Example 2: timepoint-resolution.** Continuous gradient along the
+branch, with cross-division smoothing window 2 (each timepoint averaged
+with ±2 neighbors, traversing parent/daughter boundaries).
+
+```{r}
+treeplot_t <- plot_lineage_tree(
+  rotatedEmbryo,
+  root = "ABara",
+  resolution = "timepoint",
+  smoothing_w = 2,
+  end_time = 139,
+  value_min = -1000, value_max = 8000
+)
+treeplot_t
+```
+
+**Example 3: lineage subset zoom.** Restrict the tree to a sub-lineage
+without re-rooting — handy when you want the parent timing context but
+only care about descendants of a single ancestor.
+
+```{r}
+treeplot_sub <- plot_lineage_tree(
+  rotatedEmbryo,
+  root = "ABara",
+  resolution = "timepoint",
+  lineage_subset = "ABaraa",
+  end_time = 139,
+  value_min = -1000, value_max = 8000
+)
+treeplot_sub
+```
+
+**Example 4: paginated multi-tree PDF.** Assemble a list of trees into
+a single multi-page PDF via `patchwork`. Useful for assembling
+per-embryo, per-lineage, or per-defect grids in batch.
+
+```{r}
+paginate_tree_plots(
+  list(treeplot_cell, treeplot_t, treeplot_sub),
+  file = "trees.pdf",
+  ncol = 2, plots_per_page = 4,
+  title = "Sample multi-tree PDF",
+  width = 12, height = 9
+)
+```
+
+For the full argument list — including piecewise diverging gradients
+(`colors` + `color_values`), explicit `value_min`/`value_max`,
+percentile bounds + floor/ceiling, `na_color`, `truncate_to_last_data`,
+`drop_empty_cells`, `end_time_milestone`, and tip-size auto-scaling —
+see `?plot_lineage_tree`.
+
 ### Saving a Single Embryo
 
 After processing (e.g., rotation, manual corrections), save your modified embryo with R built-in `write.csv`:
@@ -349,7 +428,7 @@ exEmbryo_info <- embryos[["info"]][[embryo_name]]
 
 ### Working with Multi-Embryo Data
 
-Many functions in this package are designed to work with the entire `embryos` list structure. For example, `plotBlotLine()` automatically processes all embryos and plots them together. However, 3D visualization and tree plotting functions (`drawEmbLine()`, `drawEmbVal()`, `CD_tree_plot()`) require a **single embryo data.frame** as input.
+Many functions in this package are designed to work with the entire `embryos` list structure. For example, `plotBlotLine()` automatically processes all embryos and plots them together. However, 3D visualization and tree plotting functions (`drawEmbLine()`, `drawEmbVal()`, `CD_tree_plot()`, `plot_lineage_tree()`) require a **single embryo data.frame** as input.
 
 **Iterate over all embryos:**
 ```{r}
