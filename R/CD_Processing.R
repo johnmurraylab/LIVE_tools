@@ -17,8 +17,9 @@
 CD_In<-function(directory, prefix = "", suffix = ".csv",
                 info.prefix = "", info.suffix = NULL,
                 time.prefix = "", time.suffix = NULL){
-  CD.term = paste0("^",prefix,".+",suffix,"$") #check file presence
+  CD.term <- paste0("^",prefix,".+",suffix,"$") #check file presence
   directory <- sub(x = directory, pattern = "[/\\\\]+$", replacement = "")
+  if(!file.exists(directory)){stop("`CD_In` directory not found: ", directory)}
   files <- list.files(directory)
   CD.files <- grep(CD.term,files,value = F)
   if(!is.null(info.suffix)){ #TIME and Info files might be mistakenly grep'ed along with CD pattern, remove them
@@ -31,6 +32,8 @@ CD_In<-function(directory, prefix = "", suffix = ".csv",
     time.files <- grep(time.term, files, value = F)
     if(all(time.files%in%CD.files)){CD.files <- CD.files[!CD.files%in%time.files]}
   }
+  if(length(CD.files)==0){stop("no CD file of given pattern found")}
+  else{message("found ", length(CD.files), " CD file")}
   CD.files <- files[CD.files]
   embNames <- gsub(paste0("^",prefix,"(.+)",suffix,"$"), "\\1", CD.files)
   CDDataL <- list()
@@ -94,15 +97,15 @@ CD_In<-function(directory, prefix = "", suffix = ".csv",
 #' @export
 CD_Save <- function(CDDataL, saveDir){
   embryos <- names(CDDataL[["CD"]])
-  if(substr(saveDir, start = nchar(saveDir), stop = nchar(saveDir))!="/"){
-    saveDir <- paste0(saveDir, "/")
+  if(substr(saveDir, nchar(saveDir), nchar(saveDir)) %in%c("/","\\")){
+    saveDir <- sub(x = saveDir, pattern = "[/\\]+$", replacement = "")
   }
   for (embryo in embryos) {
-    CD.file <- paste0(saveDir, "CD", embryo, ".csv")
+    CD.file <- file.path(saveDir, paste0("CD", embryo, ".csv"))
     write.csv(CDDataL[["CD"]][[embryo]], CD.file, row.names = FALSE)
   }
   for (embryo in embryos) {
-    info.file <- paste0(saveDir, embryo, "Info.csv")
+    info.file <- file.path(saveDir, paste0(embryo, "Info.csv"))
     write.csv(CDDataL[["info"]][[embryo]], info.file , row.names = FALSE)
   }
 }

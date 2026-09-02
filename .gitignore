@@ -16,6 +16,7 @@
 *.txt
 *_render.*
 .Rprofile
+.vscode*
 README.Rmd
 drawEmb.Rmd
 readStarryNiteZip.Rmd

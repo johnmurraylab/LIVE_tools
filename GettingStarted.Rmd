@@ -407,14 +407,14 @@ The `$info` data.frames track processing status:
 
 **Method 1: By index (quick but loses identity)**
 ```{r}
-exEmbryo <- embryos[["CD"]][[1]]
+exEmbryo <- embryos$CD[[1]]
 # WARNING: You won't know which embryo this is!
 ```
 
 **Method 2: With metadata (recommended)**
 ```{r}
-exEmbryo <- embryos[["CD"]][[1]]
-exEmbryo_info <- embryos[["info"]][[1]]
+exEmbryo <- embryos$CD[[1]]
+exEmbryo_info <- embryos$info[[1]]
 
 embryo_name <- exEmbryo_info$name  # Now you can identify it
 ```
@@ -422,8 +422,8 @@ embryo_name <- exEmbryo_info$name  # Now you can identify it
 **Method 3: By name (best practice)**
 ```{r}
 embryo_name <- "embryo1"
-exEmbryo <- embryos[["CD"]][[embryo_name]]
-exEmbryo_info <- embryos[["info"]][[embryo_name]]
+exEmbryo <- embryos$CD[[embryo_name]]
+exEmbryo_info <- embryos$info[[embryo_name]]
 ```
 
 ### Working with Multi-Embryo Data
