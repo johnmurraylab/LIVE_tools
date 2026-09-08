@@ -1,13 +1,14 @@
 \.git$
 ^renv$
 ^renv\.lock$
-^LinAlign\.Rproj$
+^.*.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^sample_data$
 ^sample_data/.*$
 ^GettingStarted.Rmd$
 ^output$
+^output_.*$
 temp
 ^.*CD.*\.csv$
 ^output_single$
@@ -15,3 +16,4 @@ temp
 ^custom.css$
 ^GettingStarted.html$
 ^GettingStarted_render.Rmd$
+ordering.R

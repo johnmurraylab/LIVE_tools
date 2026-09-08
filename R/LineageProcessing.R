@@ -1,6 +1,3 @@
-#' LineageProcessing
-#' This file contains several utility functions that helps processing data in CD-like dataFrames
-
 #' readEmbryoTable
 #' @description
 #' load a single embryo cell tracking file into data.framne

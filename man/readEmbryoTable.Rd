@@ -2,9 +2,7 @@
 % Please edit documentation in R/LineageProcessing.R
 \name{readEmbryoTable}
 \alias{readEmbryoTable}
-\title{LineageProcessing
-This file contains several utility functions that helps processing data in CD-like dataFrames
-readEmbryoTable}
+\title{readEmbryoTable}
 \usage{
 readEmbryoTable(file, time.file = NULL)
 }
